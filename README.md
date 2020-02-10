@@ -8,13 +8,14 @@ python download.py
 ```
 
 ### Literature
+---
 
 #### Datasets:
 - [Hamming embedding and weak geometricconsistency for large scale image search (INRIA Holydays)](http://lear.inrialpes.fr/people/jegou/data.php#holidays) - [download](https://lear.inrialpes.fr/pubs/2008/JDS08/jegou_hewgc08.pdf)
 - [Large-scale Landmark Retrieval/Recognition under a Noisy and Diverse Dataset](https://arxiv.org/abs/1906.04087)
 - [INSTRE: a New Benchmark for Instance-Level Object Retrieval and Recognition](https://dl.acm.org/doi/pdf/10.1145/2700292)
 
-#### Features search:
+#### Database indexing:
 - [PQk-means: Billion-scale Clustering forProduct-quantized Codes](https://arxiv.org/pdf/1709.03708.pdf)
 - [Scalable Recognition with a Vocabulary Tree](https://ieeexplore.ieee.org/document/1641018)
 - [Object retrieval with large vocabularies and fast spatial matching](https://ieeexplore.ieee.org/document/4270197)
