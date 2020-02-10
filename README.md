@@ -1,5 +1,12 @@
 # sbearbank
 
+### Getting started
+
+Download the data
+```
+python download.py
+```
+
 ### Literature
 
 #### Datasets:
