@@ -12,7 +12,7 @@ def show_progress(block_num, block_size, total_size):
     print(f"{block_num * block_size // 1024 // 1024}Mb / {total_size}", end="\r")
 
 def download(url):
-    os.makedirs("data", exists_ok=True)
+    os.makedirs("data", exist_ok=True)
     out_path = os.path.join("data", os.path.basename(url))
     urllib.request.urlretrieve(url, out_path, show_progress)
 
