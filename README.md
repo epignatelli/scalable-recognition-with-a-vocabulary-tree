@@ -23,6 +23,7 @@ python download.py
 #### Features extraction:
 - [Neural Codes for Image Retrieval](https://arxiv.org/pdf/1404.1777.pdf)
 - [Scale-Invariant Feature Transform](https://pdfs.semanticscholar.org/0129/3b985b17154fbb178cd1f944ce3cc4fc9266.pdf)
+- [Slides on SIFT (Lect. 11 and 12)](http://vision.stanford.edu/teaching/cs231a_autumn1112/lecture/)
 - [Object Recognition from Local Scale-Invariant Features](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=790410)
 - [Distinctive Image Features from Scale-Invariant Keypoints](https://link.springer.com/content/pdf/10.1023/B:VISI.0000029664.99615.94.pdf)
 - [Speeded Up Ro- bust Feature (SURF)](https://www.vision.ee.ethz.ch/~surf/eccv06.pdf)
