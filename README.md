@@ -37,5 +37,6 @@ python download.py
 - [A survey on Image Retrieval Methods](http://cogprints.org/9815/1/Survey%20on%20Image%20Retrieval%20Methods.pdf)
 - [Recent Advance in Content-based ImageRetrieval: A Literature Survey](https://arxiv.org/pdf/1706.06064.pdf)
 
-#### Non scientific
+#### Code
 - https://towardsdatascience.com/bag-of-visual-words-in-a-nutshell-9ceea97ce0fb
+- https://github.com/ducha-aiki/pytorch-sift
