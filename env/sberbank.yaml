@@ -1,0 +1,25 @@
+name: sberbank
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - future
+  - h5py
+  - jupyter
+  - numpy
+  - pandas
+  - pip
+  - pytorch:pytorch=1.2
+  - pytorch:cudatoolkit=9.2
+  - pytorch:torchvision
+  - pytorch:tensorboard
+  - pymongo
+  - requests
+  - scipy
+  - scikit-learn
+  - tqdm
+  - pip:
+    - seaborn
+    - kornia
+prefix: ~/anaconda3/envs/sberbank
+
