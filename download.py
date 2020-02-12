@@ -1,6 +1,4 @@
-from tqdm import tqdm_notebook as tqdm
 import urllib.request
-from ftplib import FTP
 import os
 from multiprocessing.pool import ThreadPool
 
@@ -13,9 +11,8 @@ downloaded = 0
 
 def show_progress(block_num, block_size, total_size):
     global downloaded
-    downloaded += 1 * block_size / 1024 / 1024
+    downloaded += block_size / 1024 / 1024
     print(f"Downloading data: {int(downloaded)} MB/{TOTAL_SIZE} MB", end="\r")
-
 
 def download(file):
     os.makedirs("data", exist_ok=True)
