@@ -4,21 +4,27 @@ from ftplib import FTP
 import os
 from multiprocessing.pool import ThreadPool
 
-INRIA_DESCRIPTORS_URL = "ftp://ftp.inrialpes.fr/pub/lear/douze/data/siftgeo.tar.gz"
-INRIA_IMAGES1_URL = "ftp://ftp.inrialpes.fr/pub/lear/douze/data/jpg1.tar.gz"
-INRIA_IMAGES2_URL = "ftp://ftp.inrialpes.fr/pub/lear/douze/data/jpg2.tar.gz"
+INRIA_DESCRIPTORS = ("ftp://ftp.inrialpes.fr/pub/lear/douze/data/siftgeo.tar.gz", 538744)
+INRIA_IMAGES1 = ("ftp://ftp.inrialpes.fr/pub/lear/douze/data/jpg1.tar.gz", 1115072)
+INRIA_IMAGES2 = ("ftp://ftp.inrialpes.fr/pub/lear/douze/data/jpg2.tar.gz", 1661496)
+TOTAL_SIZE = INRIA_DESCRIPTORS[1] + INRIA_IMAGES1[1] + INRIA_IMAGES2[1]
+
+downloaded = 0
 
 def show_progress(block_num, block_size, total_size):
-    print(f"{block_num * block_size // 1024 // 1024}Mb / {total_size}", end="\r")
+	downloaded += block_size // 1024 // 1024
+    print(f"{downloaded}Mb / {TOTAL_SIZE}", end="\r")
 
-def download(url):
+def download(file):
     os.makedirs("data", exist_ok=True)
+    url, size = file
     out_path = os.path.join("data", os.path.basename(url))
     urllib.request.urlretrieve(url, out_path, show_progress)
 
 def download_parallel():
     with ThreadPool(3) as p:
-        p.map(download, [INRIA_DESCRIPTORS_URL, INRIA_IMAGES1_URL, INRIA_IMAGES2_URL])
+        p.map(download, [INRIA_DESCRIPTORS, INRIA_IMAGES1, INRIA_IMAGES2])
     
 if __name__ == "__main__":
+	downloaded = 0
     download_parallel()
