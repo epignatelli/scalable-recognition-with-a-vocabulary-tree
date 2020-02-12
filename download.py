@@ -12,8 +12,10 @@ TOTAL_SIZE = INRIA_DESCRIPTORS[1] + INRIA_IMAGES1[1] + INRIA_IMAGES2[1]
 downloaded = 0
 
 def show_progress(block_num, block_size, total_size):
-	downloaded += block_size // 1024 // 1024
-    print(f"{downloaded}Mb / {TOTAL_SIZE}", end="\r")
+    global downloaded
+    downloaded += 1 * block_size / 1024 / 1024
+    print(f"Downloading data: {int(downloaded)} MB/{TOTAL_SIZE} MB", end="\r")
+
 
 def download(file):
     os.makedirs("data", exist_ok=True)
@@ -26,5 +28,4 @@ def download_parallel():
         p.map(download, [INRIA_DESCRIPTORS, INRIA_IMAGES1, INRIA_IMAGES2])
     
 if __name__ == "__main__":
-	downloaded = 0
     download_parallel()
