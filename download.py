@@ -29,3 +29,5 @@ def download_parallel():
     
 if __name__ == "__main__":
     download_parallel()
+    print()
+    print("Data downloaded.")
