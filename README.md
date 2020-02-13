@@ -2,6 +2,11 @@
 
 ### Getting started
 
+Install the conda environment
+```
+conda env create -f env\sberbank.yaml
+```
+
 Download the data
 ```
 python download.py
