@@ -2,9 +2,14 @@
 
 ### Getting started
 
-Install the conda environment
+Install the conda environment  
+- if you have a CUDA-capable machine
 ```
 conda env create -f env\sberbank.yaml
+```
+- if you don't have a CUDA-capable machine, or if you don't know if you have one
+```
+conda env create -f env\sberbank-mac.yaml
 ```
 
 Download the data
