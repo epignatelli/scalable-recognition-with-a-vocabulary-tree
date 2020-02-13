@@ -1,6 +1,4 @@
-# sbearbank
-
-### Getting started
+## Getting started
 
 #### 1. Install the conda environment  
    A. If you have a CUDA-capable machine
@@ -26,7 +24,7 @@ jupyter-notebook
 ```
 
 
-### Literature
+## Literature
 ---
 
 #### Datasets:
