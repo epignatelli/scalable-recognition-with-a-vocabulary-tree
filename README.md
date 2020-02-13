@@ -2,20 +2,29 @@
 
 ### Getting started
 
-Install the conda environment  
-- if you have a CUDA-capable machine
+#### 1. Install the conda environment  
+   A. If you have a CUDA-capable machine
 ```
 conda env create -f env\sberbank.yaml
-```
-- if you don't have a CUDA-capable machine, or if you don't know if you have one
+```  
+
+   B. If you don't have a CUDA-capable machine, or if you don't know if you have one 
+    
 ```
 conda env create -f env\sberbank-mac.yaml
 ```
 
-Download the data
+#### 2. Download the data
 ```
 python download.py
 ```
+
+#### 3. Start jupyter and open the notebook
+```
+conda activate sberbank
+jupyter-notebook
+```
+
 
 ### Literature
 ---
