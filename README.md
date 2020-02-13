@@ -25,7 +25,6 @@ jupyter-notebook
 
 
 ## Literature
----
 
 #### Datasets:
 - [Hamming embedding and weak geometricconsistency for large scale image search (INRIA Holydays)](http://lear.inrialpes.fr/people/jegou/data.php#holidays) - [download](https://lear.inrialpes.fr/pubs/2008/JDS08/jegou_hewgc08.pdf)
