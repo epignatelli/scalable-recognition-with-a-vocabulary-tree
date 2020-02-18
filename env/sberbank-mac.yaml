@@ -6,9 +6,11 @@ dependencies:
   - future
   - h5py
   - jupyter
+  - networkx
   - numpy
   - pandas
   - pip
+  - pygraphviz
   - pytorch:pytorch=1.2
   - pytorch:torchvision
   - pytorch:tensorboard
