@@ -15,6 +15,7 @@ class Dataset():
         
     def get_image_by_name(self, image_name=None, gray=True):
         image = cv2.imread(self.path + '/' + image_name)
+        image = cv2.resize(image, (0,0), fx=0.3, fy=0.3) 
         if gray:
             gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
             return np.float32(gray)
