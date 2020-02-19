@@ -5,6 +5,7 @@ from os import listdir
 from os.path import isfile, join
 import random
 from matplotlib.gridspec import GridSpec
+import matplotlib.colors as mcolors
 
 def show_MSER_blobs(img, blobs):
     canvas1 = img.copy()
@@ -69,6 +70,7 @@ def show_random_descriptors(img, keypoints, descriptors, N = 5):
     ax1 = fig.add_subplot(gs[:, :-2])
     ax1.set_title("Image")
     show_image(img_with_kpts)
+    plt.axis('off')
     
     # Showing the patched with their desctiptors
     for n in range(N):
@@ -78,13 +80,18 @@ def show_random_descriptors(img, keypoints, descriptors, N = 5):
         if n == 0:
             ax.set_title("Patch")
         show_image(patch)
+        plt.axis('off')
         
         # Getting descriptor and plotting it
         ax = fig.add_subplot(gs[n, -1])
+        clist = [(0, "#c58882"), (1, "#1d201f")]
+        rvb = mcolors.LinearSegmentedColormap.from_list("", clist)
         if n == 0:
             ax.set_title("Descriptor")
-        x = np.arange(len(some_descriptors[n]))
-        plt.bar(x,some_descriptors[n])
+        N = len(some_descriptors[n])
+        x = np.arange(N)
+        plt.bar(x,some_descriptors[n],color=rvb(x/N),width=1.0)
+        plt.axis('off')
 
 class Dataset():
     def __init__(self, folder="jpg"):
