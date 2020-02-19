@@ -99,7 +99,7 @@ def show_random_descriptors(img, keypoints, descriptors, N=5):
 
 class Dataset():
     def __init__(self, folder="jpg"):
-        self.path = 'data/' + folder
+        self.path = folder
         self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))]
 
     def print_files(self):
