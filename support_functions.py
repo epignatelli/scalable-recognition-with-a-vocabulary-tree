@@ -144,7 +144,6 @@ def detect_MSER_blobs(img, min_area=4000, max_area=200000):
     coordinates, bboxes = mser.detectRegions(gray)
 
     # Filter the coordinates
-    vis = img.copy()
     coords = []
     for coord in coordinates:
         bbox = cv2.boundingRect(coord)
