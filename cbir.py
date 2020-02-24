@@ -195,7 +195,7 @@ class CIBR(object):
             db_id = self.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = sorted(scores, key=scores.__getitem__)
-        return scores.keys()[:4]
+        return scores.keys()[:n]
     
     def draw(self, figsize=None):
         figsize = (30, 10) if figsize is None else figsize
