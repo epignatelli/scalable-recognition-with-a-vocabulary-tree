@@ -43,16 +43,6 @@ class CIBR(object):
         else:
             return sift(image)
 
-    def get_image_id(self, image_path):
-        """
-        Given an image path, returns the id of the image: the numerical part of the filename
-        Args:
-            image_path (str): path of the image
-        Returns:
-            (str): the id of the image as string
-        """
-        return os.path.splitext(os.path.basename(image_path))[0]
-
     def fit(self, features=None, node=0, root=None, current_depth=0):
         """
         Generates a hierarchical vocabulary tree representation of some input features
@@ -126,7 +116,7 @@ class CIBR(object):
             (networkx.DiGraph): The tree representing the encoded image
         """
         points, features = self.extract_features(image_path)
-        image_id = self.get_image_id(image_path)
+        image_id = self.database.get_image_id(image_path)
         for feature in features:
             path = self.propagate_feature(feature)
             for i in range(len(path)):
@@ -175,8 +165,8 @@ class CIBR(object):
         """
         Measures the similatiries between the set of paths of the features of each image.
         """
-        db_id = self.get_image_id(database_image_path)
-        query_id = self.get_image_id(query_image_path)
+        db_id = self.database.get_image_id(database_image_path)
+        query_id = self.database.get_image_id(query_image_path)
         
         # propagate the query down the tree
         self.encode(query_image_path)
@@ -192,7 +182,7 @@ class CIBR(object):
     def retrieve(self, query_image_path, n=4):
         scores = {}
         for database_image_path in self.dataset.all_images:
-            db_id = self.get_image_id(database_image_path)
+            db_id = self.database.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = sorted(scores, key=scores.__getitem__)
         return scores.keys()[:n]
