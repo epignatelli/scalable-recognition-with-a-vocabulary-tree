@@ -66,8 +66,6 @@ class CIBR(object):
             node (int): current node id to set
             root (numpy.ndarray): the value of the parent of the `node` as a virtual feature
             current_depth (int): the depth of the node as the distance in jumps from the very root of the tree
-        Returns:
-            (Dict[int], List[int]): A dictionary of nodesID with the corresponding children
         """
         if features is None:
             features = self.extract_features()
