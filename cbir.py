@@ -146,7 +146,6 @@ class CIBR(object):
     def propagate_feature(self, feature, node=0):
         """
         Propagates a feature, down the tree, and returns the closest node.
-        Note that we are returning only the leaf, and not the entire path.
         Args:
             feature (numpy.ndarray): The feature to lookup
             root (int): Node id to start the search from.
