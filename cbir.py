@@ -168,6 +168,7 @@ class CIBR(object):
             return subgraph
         weights = np.array(subgraph.nodes(data="w"))
         tfidf = np.array(subgraph.nodes(data=image_id))
+        tfidf = tfidf / np.linalg.norm(tfidf)  # l2 norm
         return tfidf * weights
 
     def score(self, database_image_path, query_image_path):
@@ -201,4 +202,3 @@ class CIBR(object):
         plt.figure(figsize=figsize)
         pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog='dot')
         nx.draw(self.graph, pos=pos)
-        
