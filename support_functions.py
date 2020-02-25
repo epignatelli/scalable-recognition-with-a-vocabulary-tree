@@ -7,6 +7,45 @@ import random
 from matplotlib.gridspec import GridSpec
 import matplotlib.colors as mcolors
 
+def extract_MSER_patches(img, blobs, square=False):
+    """Extracts the patches associated to the keypoints of the MSER
+    descriptors.    
+    
+    Arguments:
+        img {np.array} -- Image from which the patches are extracted
+        blobs -- Bounding boxes as returned by the function mser.detectRegions()
+    
+    Returns:
+        [np.array] -- List of patches
+    """    
+    patch_size = (128, 128)
+    patches = []
+    for cnt in blobs:
+        rect = cv2.minAreaRect(cnt)
+        # rotate img
+        angle = rect[2]
+        rows,cols = img.shape[0], img.shape[1]
+        M = cv2.getRotationMatrix2D((cols/2,rows/2),angle,1)
+        img_rot = cv2.warpAffine(img,M,(cols,rows))
+
+        # rotate bounding box
+        rect0 = (rect[0], rect[1], 0.0) 
+        box = cv2.boxPoints(rect0)
+        pts = np.int0(cv2.transform(np.array([box]), M))[0]    
+        pts[pts < 0] = 0
+
+        # crop
+        img_crop = img_rot[pts[1][1]:pts[0][1], 
+                        pts[1][0]:pts[2][0]]
+        
+        if img_crop.size == 0:
+            continue
+
+        # Squares the image 
+        resized = cv2.resize(img_crop, patch_size, interpolation = cv2.INTER_LANCZOS4) 
+
+        patches.append(resized)
+    return patches    
 
 def show_MSER_blobs(img, blobs):
     canvas1 = img.copy()
@@ -100,12 +139,13 @@ def show_random_descriptors(img, keypoints, descriptors, N=5):
 class Dataset():
     def __init__(self, folder="data/jpg"):
         self.path = folder
-        self.all_images = [join(self.path, f) for f in listdir(self.path) if isfile(join(self.path, f))]
+        self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))]
 
     def print_files(self):
         print(self.all_images[:5])
 
     def get_image_by_name(self, image_name=None, gray=True):
+        print(self.path + '/' + image_name)
         image = cv2.imread(self.path + '/' + image_name)
         image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
         if gray:
