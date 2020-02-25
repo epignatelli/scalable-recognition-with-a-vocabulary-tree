@@ -18,7 +18,7 @@ def extract_MSER_patches(img, blobs, square=False):
     Returns:
         [np.array] -- List of patches
     """    
-    patch_size = (128, 128)
+    patch_size = (64, 64)
     patches = []
     for cnt in blobs:
         rect = cv2.minAreaRect(cnt)
@@ -96,28 +96,25 @@ def patch_from_keypoint(img, keypoint):
 
 
 # Shows N descriptors taken at random
-def show_random_descriptors(img, keypoints, descriptors, N=5):
+def show_random_descriptors(img, patches, descriptors, N=5):
     # Getting random keypoints
-    random_idx = [random.randint(0, len(keypoints) - 1) for n in range(N)]
-    some_keypoints = [keypoints[i] for i in random_idx]
+    random_idx = [random.randint(0, len(patches) - 1) for n in range(N)]
+    some_patches= [patches[i] for i in random_idx]
     some_descriptors = [descriptors[i] for i in random_idx]
 
     # Setting up axes
     fig = plt.figure(constrained_layout=True, figsize=(15, 8))
     gs = GridSpec(N, 8, figure=fig)
 
-    # Showing the image with the keypoints
-    img_with_kpts = cv2.drawKeypoints(img, some_keypoints, None, color=[255, 0, 0],
-                                      flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     ax1 = fig.add_subplot(gs[:, :-2])
     ax1.set_title("Image")
-    show_image(img_with_kpts)
+    show_image(img)
     plt.axis('off')
 
     # Showing the patched with their desctiptors
     for n in range(N):
         # Getting and showing patch
-        patch = patch_from_keypoint(img, some_keypoints[n])
+        patch = some_patches[n]
         ax = fig.add_subplot(gs[n, -2])
         if n == 0:
             ax.set_title("Patch")
