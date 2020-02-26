@@ -4,6 +4,8 @@ import os
 from os import listdir
 from os.path import isfile, join
 import random
+import matplotlib.pyplot as plt
+from .features import Descriptor
 
 
 class Dataset():
@@ -11,6 +13,7 @@ class Dataset():
         self.path = folder
         self.all_images = [f for f in listdir(
             self.path) if isfile(join(self.path, f))]
+        self.descriptor = Descriptor()
 
     def __str__(self):
         images = []
@@ -46,5 +49,14 @@ class Dataset():
         """
         return os.path.splitext(os.path.basename(image_path))[0]
 
-    def extract_feature(self, image):
-        raise NotImplementedError
+    def extract_features(self, image):
+        keypoints, blobs = self.descriptor.find_keypoints(image)
+        patches = self.descriptor.extract_MSER_patches(image, blobs)
+        descriptors = [self.descriptor.describe(patch) for patch in patches]
+        return descriptors
+
+    def show_image(img, gray=False):
+        if not gray:
+            plt.imshow(img, aspect="equal")
+        else:
+            plt.imshow(img, aspect="equal", cmap="gray")
