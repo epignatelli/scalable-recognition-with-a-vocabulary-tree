@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 import random
 import matplotlib.pyplot as plt
-from .features import Descriptor
+from features import Descriptor
 
 
 class Dataset():
@@ -55,6 +55,7 @@ class Dataset():
         descriptors = [self.descriptor.describe(patch) for patch in patches]
         return descriptors
 
+    @staticmethod
     def show_image(img, gray=False, **kwargs):
         if not gray:
             plt.imshow(img, aspect="equal", **kwargs)

@@ -8,12 +8,12 @@ from matplotlib.gridspec import GridSpec
 from pytorch_sift.pytorch_sift import SIFTNet
 
 
-def Descriptor(object):
+class Descriptor(object):
     def __init__(self, patch_size=65, mser_min_area=4000, mser_max_area=200000):
         # this sets self.describe to the SIFTNet callable
         self.patch_size = (int(patch_size), int(patch_size))
         self.sift = SIFTNet(patch_size=patch_size,
-                            sigma_type="vlfeat", masktype='Gauss')
+                            sigma_type="vlfeat", mask_type='Gauss')
 
         # Creating the detector and setting some properties
         # see --> https://docs.opencv.org/3.4/d3/d28/classcv_1_1MSER.html
@@ -31,7 +31,7 @@ def Descriptor(object):
         blobs, bboxes = self.mser.detectRegions(gray)
         return kp, blobs
 
-    def extract_patches(self, img, blobs, square=False):
+    def extract_patches(self, img, blobs, square=True, fit_ellipse=True):
         """Extracts the patches associated to the keypoints of the MSER
         descriptors.
 
@@ -43,8 +43,12 @@ def Descriptor(object):
             [np.array] -- List of patches
         """
         patches = []
-        for cnt in blobs:
-            rect = cv2.minAreaRect(cnt)
+        for rect in rectangles:
+            if fit_ellipse:
+                rect = cv2.fitEllipse(blob)
+            else:
+                rect = cv2.minAreaRect(blob)
+                
             # rotate img
             angle = rect[2]
             rows, cols = img.shape[0], img.shape[1]
@@ -78,6 +82,7 @@ def Descriptor(object):
         """
         return self.sift(torch.as_tensor(patch))
 
+    @staticmethod
     def show_blobs(img, blobs):
         canvas1 = img.copy()
         canvas3 = np.zeros_like(img)
@@ -103,6 +108,7 @@ def Descriptor(object):
         plt.subplot(122)
         plt.imshow(canvas3)
 
+    @staticmethod
     def show_random_descriptors(img, patches, descriptors, N=5):
         """
         Shows N descriptors taken at random
@@ -142,6 +148,7 @@ def Descriptor(object):
             plt.bar(x, some_descriptors[n], color=rvb(x / N), width=1.0)
             plt.axis('off')
 
+    @staticmethod
     def show_corners_on_image(img, corners):
         img_3channels = cv2.cvtColor(img / 255, cv2.COLOR_GRAY2RGB)
         img_3channels[corners] = [1, 0, 0]
