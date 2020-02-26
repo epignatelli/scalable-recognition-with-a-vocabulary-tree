@@ -1,3 +1,0 @@
-[submodule "pytorch-sift"]
-	path = pytorch-sift
-	url = https://github.com/ducha-aiki/pytorch-sift
