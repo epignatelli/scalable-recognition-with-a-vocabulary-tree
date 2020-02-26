@@ -9,7 +9,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-class CIBR(object):
+class CBIR(object):
     def __init__(self, dataset, n_branches, depth):
         self.dataset = dataset
         self.n_branches = n_branches
