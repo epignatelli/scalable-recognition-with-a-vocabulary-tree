@@ -55,8 +55,8 @@ class Dataset():
         descriptors = [self.descriptor.describe(patch) for patch in patches]
         return descriptors
 
-    def show_image(img, gray=False):
+    def show_image(img, gray=False, **kwargs):
         if not gray:
-            plt.imshow(img, aspect="equal")
+            plt.imshow(img, aspect="equal", **kwargs)
         else:
-            plt.imshow(img, aspect="equal", cmap="gray")
+            plt.imshow(img, aspect="equal", cmap="gray", **kwargs)
