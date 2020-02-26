@@ -82,6 +82,12 @@ class Descriptor(object):
         """
         return self.sift(torch.as_tensor(patch))
 
+    def extract_features(self, image):
+        keypoints, blobs = self.find_keypoints(image)
+        patches = self.extract_patches(image, blobs)
+        descriptors = [self.describe(patch) for patch in patches]
+        return descriptors
+
     @staticmethod
     def show_blobs(img, blobs):
         canvas1 = img.copy()

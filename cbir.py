@@ -7,6 +7,7 @@ import json
 import random
 import networkx as nx
 import matplotlib.pyplot as plt
+from features import Descriptor
 
 
 class CBIR(object):
@@ -16,26 +17,21 @@ class CBIR(object):
         self.depth = depth
         self.tree = {}
         self.nodes = {}
-        self.leaves = {}
-        
+
         # private:
         self._current_index = 0
-        
+
         # build graph
         self.graph = nx.DiGraph()
         self.fit()
-        for k, v in self.tree.items():
-            self.graph.add_node(k, w=1)
-            for link in v:
-                self.graph.add_edge(k, link)
-        
+
         # compute inverted index
-#         self.index()
+        self.index()
         return
-    
+
     def extract_features(self, image=None):
         # dummy features to test
-        # replace with Antonio's 
+        # replace with Antonio's
         if (image is None):
             ones = np.ones(1)
 #             return np.array([ones, ones * 2, ones * 10, ones * 11])
@@ -61,32 +57,31 @@ class CBIR(object):
             features = self.extract_features()
         if root is None:
             root = np.mean(features)
-        
+
         self.nodes[node] = root
         self.graph.add_node(node)
-        
+
         # if `node` is a leaf node, return
         if current_depth >= self.depth or len(features) < self.n_branches:
-            # initialise leaves
-            self.leaves[node] = {}
             return
-        
+
         # group features by cluster
         model = KMeans(n_clusters=self.n_branches)
         model.fit(features)
         children = [[] for i in range(self.n_branches)]
         for i in range(len(features)):
             children[model.labels_[i]].append(features[i])
-        
+
         # cluster children
         self.tree[node] = []
         for i in range(self.n_branches):
             self._current_index += 1
             self.tree[node].append(self._current_index)
             self.graph.add_edge(node, self._current_index)
-            self.fit(children[i], self._current_index, model.cluster_centers_[i], current_depth + 1)
+            self.fit(children[i], self._current_index,
+                     model.cluster_centers_[i], current_depth + 1)
         return
-    
+
     def index(self):
         """
         Generates the inverted index structure using tf-idf.
@@ -95,15 +90,16 @@ class CBIR(object):
         # create inverted index
         for image_path in self.dataset.all_images:
             self.encode(image_path, return_graph=False)
-            
+
         # set weights of node based on entropy
         N = len(self.dataset)
         for node_id, files in self.graph.nodes(data=True):
             N_i = len(files)
             if N_i:  # if the node is visited, calculate the weight, otherwise, leave it as initialised
-                self.graph.nodes[node_id]["w"] = np.log(N / N_i)  # calculate entropy
+                self.graph.nodes[node_id]["w"] = np.log(
+                    N / N_i)  # calculate entropy
         return
-    
+
     def encode(self, image_path):
         """
         Encodes an image into a set of paths on the tree.
@@ -143,9 +139,10 @@ class CBIR(object):
         """
         min_dist = float("inf")
         path = [node]
-        while len(self.tree[node]) != 0:  #recur
+        while len(self.tree[node]) != 0:  # recur
             for child in self.tree[node]:
-                distance = np.linalg.norm([self.nodes[child] - feature])  # l1 norm 
+                distance = np.linalg.norm(
+                    [self.nodes[child] - feature])  # l1 norm
                 if distance < min_dist:
                     min_dist = distance
                     node = child
@@ -153,7 +150,8 @@ class CBIR(object):
         return path
 
     def get_encoded(self, image_id, return_graph=True):
-        subgraph = self.graph.subgraph([k for k, v in a.nodes(data=image_id, default=None) if v is not None])
+        subgraph = self.graph.subgraph(
+            [k for k, v in a.nodes(data=image_id, default=None) if v is not None])
         if return_graph:
             return subgraph
         weights = np.array(subgraph.nodes(data="w"))
@@ -167,18 +165,18 @@ class CBIR(object):
         """
         db_id = self.database.get_image_id(database_image_path)
         query_id = self.database.get_image_id(query_image_path)
-        
+
         # propagate the query down the tree
         self.encode(query_image_path)
-        
+
         # get the vectors of the images
         d = self.get_encoded(db_id, return_graph=False)
         q = self.get_encoded(query_id, return_graph=False)
-        
+
         # simplified scoring using the l2 norm
         score = 2 - 2 * np.sum(d * q)
         return score
-        
+
     def retrieve(self, query_image_path, n=4):
         scores = {}
         for database_image_path in self.dataset.all_images:
@@ -186,7 +184,7 @@ class CBIR(object):
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = sorted(scores, key=scores.__getitem__)
         return scores.keys()[:n]
-    
+
     def draw(self, figsize=None):
         figsize = (30, 10) if figsize is None else figsize
         plt.figure(figsize=figsize)
