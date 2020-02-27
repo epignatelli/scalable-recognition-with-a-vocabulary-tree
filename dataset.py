@@ -25,8 +25,10 @@ class Dataset():
     def __repr__(self):
         return str(self)
 
-    def read_image(self, image_path, gray=False):
-        path = os.path.abspath(image_path)
+    def read_image(self, image_name, gray=False):
+        path = os.path.join(self.path, image_name)
+        print(path)
+        path = os.path.abspath(path)
         image = cv2.imread(path)
         image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
         if gray:
@@ -35,13 +37,11 @@ class Dataset():
         else:
             return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    def get_image_by_name(self, image_name=None, gray=True):
-        path = os.path.join(self.path, image_name)
-        print(path)
-        return self.read_image(path)
+    def get_image_by_name(self, image_name=None):
+        return self.read_image(image_name)
 
-    def get_random_image(self, gray=False):
-        return self.get_image_by_name(random.choice(self.all_images), gray)
+    def get_random_image(self):
+        return self.get_image_by_name(random.choice(self.all_images))
 
     def get_image_id(self, image_path):
         """
@@ -54,7 +54,7 @@ class Dataset():
         return os.path.splitext(os.path.basename(image_path))[0]
 
     def extract_features(self, image_path):
-        image = self.read_image(image_path, gray=False)
+        image = self.read_image(image_path)
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         keypoints, blobs = self.descriptor.find_keypoints(image)
         patches = self.descriptor.extract_patches(gray, blobs)
