@@ -6,14 +6,15 @@ dependencies:
   - future
   - h5py
   - jupyter
+  - anaconda::jupyterlab
+  - matplotlib
   - networkx
   - numpy
   - pandas
   - pip
   - pygraphviz
-  - pytorch:pytorch
-  - pytorch:torchvision
-  - pymongo
+  - pytorch::pytorch
+  - pytorch::torchvision
   - requests
   - scipy
   - scikit-learn
