@@ -11,7 +11,7 @@ from features import Descriptor
 class Dataset():
     def __init__(self, folder="data/jpg"):
         self.path = folder
-        self.all_images = [os.path.join(self.path, f) for f in listdir(self.path) if isfile(join(self.path, f))][:5]
+        self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))][:5]
         self.descriptor = Descriptor()
 
     def __str__(self):
