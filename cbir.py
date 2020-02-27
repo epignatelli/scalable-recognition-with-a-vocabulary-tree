@@ -41,7 +41,8 @@ class CBIR(object):
                 times.append(time.time() - start)
                 avg = np.mean(times)
                 eta = avg * total - avg * (i + 1)
-                print("Extracted features %d/%d from image %s - ETA: %2fs" % (i + 1, total, path, eta), end="\r")
+                print("Extracted features %d/%d from image %s - ETA: %2fs" %
+                      (i + 1, total, path, eta), end="\r")
             print("\n%d features extracted" % len(features))
             return np.array(features)
 
@@ -110,9 +111,9 @@ class CBIR(object):
 
     def propagate(self, image_path):
         """
-        Encodes an image into a set of paths on the tree.
-        The vector representation is the values list of a key value pair,
-        where the key is the id of the node and the value is the number of times that node is visited during propagation.
+        Proapgates the features of an image down the tree, until the find a leaf.
+        Every time they pass through a node, they leave a fingerprint, by storing a key value pairm
+        where the key is the id of the image and the value is the number of times that node is visited.
         This results into an tf-idf scheme.
         Args:
             image_path (str): path of the image to encode
@@ -144,7 +145,8 @@ class CBIR(object):
             min_dist = float("inf")
             # print(node, self.graph.out_degree(node))
             for child in self.graph[node]:
-                distance = np.linalg.norm([self.nodes[child] - feature])  # l1 norm
+                distance = np.linalg.norm(
+                    [self.nodes[child] - feature])  # l1 norm
                 # print(distance, ">", min_dist, ":", distance > min_dist)
                 if distance < min_dist:
                     min_dist = distance
@@ -153,17 +155,18 @@ class CBIR(object):
         return path
 
     def encode(self, image_id, return_graph=True, draw=True):
-        subgraph = self.graph.subgraph(
-            [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
         if return_graph:
+            subgraph = self.graph.subgraph(
+                [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
             if draw:
                 colours = ["C0"] * len(self.graph.nodes)
                 for node in subgraph.nodes:
                     colours[node] = "C3"
                 self.draw(node_color=colours)
             return subgraph
-        weights = np.array(subgraph.nodes(data="w"))
-        tfidf = np.array(subgraph.nodes(data=image_id))
+
+        weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
+        tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
         tfidf = tfidf / np.linalg.norm(tfidf)  # l2 norm
         return tfidf * weights
 
@@ -178,9 +181,8 @@ class CBIR(object):
         self.propagate(query_image_path)
 
         # get the vectors of the images
-        d = self.get_encoded(db_id, return_graph=False)
-        q = self.get_encoded(query_id, return_graph=False)
-
+        d = self.encode(db_id, return_graph=False)
+        q = self.encode(query_id, return_graph=False)
         # simplified scoring using the l2 norm
         score = 2 - 2 * np.sum(d * q)
         return score
