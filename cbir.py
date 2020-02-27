@@ -1,15 +1,8 @@
 import numpy as np
-import sys
-import os
-import numpy as np
 from sklearn.cluster import KMeans
-import json
-import random
 import networkx as nx
 import matplotlib.pyplot as plt
-from features import Descriptor
 from dataset import Dataset
-import multiprocessing
 import time
 
 
@@ -98,7 +91,7 @@ class CBIR(object):
     def index(self):
         """
         Generates the inverted index structure using tf-idf.
-        This function also calculates the weights for each node as entropy. 
+        This function also calculates the weights for each node as entropy.
         """
         # create inverted index
         print("Generating index")
@@ -123,8 +116,6 @@ class CBIR(object):
         This results into an tf-idf scheme.
         Args:
             image_path (str): path of the image to encode
-        Return:
-            (networkx.DiGraph): The tree representing the encoded image
         """
         print("Creating inverted index for %s" % image_path)
         features = self.extract_features(image_path)
@@ -151,7 +142,7 @@ class CBIR(object):
         min_dist = float("inf")
         path = [node]
         while self.graph.out_degree(node):  # stop if leaf
-            print(node, self.graph.out_degree(child))
+            print(node, self.graph.out_degree(node))
             for child in self.graph[node]:
                 distance = np.linalg.norm([self.nodes[child] - feature])  # l1 norm
                 if distance < min_dist:
@@ -163,7 +154,7 @@ class CBIR(object):
 
     def encode(self, image_id, return_graph=True):
         subgraph = self.graph.subgraph(
-            [k for k, v in a.nodes(data=image_id, default=None) if v is not None])
+            [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
         if return_graph:
             return subgraph
         weights = np.array(subgraph.nodes(data="w"))
@@ -195,7 +186,7 @@ class CBIR(object):
             db_id = self.dataset.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = sorted(scores, key=scores.__getitem__)
-        return scores.keys()[:n]
+        return sorted_scores.keys()[:n]
 
     def draw(self, figsize=None):
         figsize = (30, 10) if figsize is None else figsize

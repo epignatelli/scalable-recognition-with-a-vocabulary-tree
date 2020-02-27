@@ -11,16 +11,14 @@ dependencies:
   - pandas
   - pip
   - pygraphviz
-  - pytorch:pytorch=1.2
+  - pytorch:pytorch
   - pytorch:torchvision
-  - pytorch:tensorboard
   - pymongo
   - requests
   - scipy
   - scikit-learn
   - tqdm
   - pip:
-    - seaborn
-    - kornia
+    - opencv-python
 prefix: ~/anaconda3/envs/sberbank
 
