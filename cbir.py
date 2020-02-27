@@ -25,7 +25,7 @@ class CBIR(object):
         self.draw()
         plt.show()
         # compute inverted index
-        # self.index()
+        self.index()
         return
 
     def extract_features(self, image=None):
@@ -41,7 +41,7 @@ class CBIR(object):
                 times.append(time.time() - start)
                 avg = np.mean(times)
                 eta = avg * total - avg * (i + 1)
-                print("Extracted features %d/%d from image %s - ETA: %ss" % (i + 1, total, path, eta), end="\r")
+                print("Extracted features %d/%d from image %s - ETA: %2fs" % (i + 1, total, path, eta), end="\r")
             print("\n%d features extracted" % len(features))
             return np.array(features)
 
@@ -139,23 +139,28 @@ class CBIR(object):
             root (int): Node id to start the search from.
                         Default is 0, meaning the very root of the tree
         """
-        min_dist = float("inf")
         path = [node]
         while self.graph.out_degree(node):  # stop if leaf
-            print(node, self.graph.out_degree(node))
+            min_dist = float("inf")
+            # print(node, self.graph.out_degree(node))
             for child in self.graph[node]:
                 distance = np.linalg.norm([self.nodes[child] - feature])  # l1 norm
+                # print(distance, ">", min_dist, ":", distance > min_dist)
                 if distance < min_dist:
-                    # print(f"{node} to {child} is distant {distance}")
                     min_dist = distance
                     node = child
                     path.append(child)
         return path
 
-    def encode(self, image_id, return_graph=True):
+    def encode(self, image_id, return_graph=True, draw=True):
         subgraph = self.graph.subgraph(
             [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
         if return_graph:
+            if draw:
+                colours = ["C0"] * len(self.graph.nodes)
+                for node in subgraph.nodes:
+                    colours[node] = "C3"
+                self.draw(node_color=colours)
             return subgraph
         weights = np.array(subgraph.nodes(data="w"))
         tfidf = np.array(subgraph.nodes(data=image_id))
@@ -188,8 +193,8 @@ class CBIR(object):
         sorted_scores = sorted(scores, key=scores.__getitem__)
         return sorted_scores.keys()[:n]
 
-    def draw(self, figsize=None):
+    def draw(self, figsize=None, node_color=None):
         figsize = (30, 10) if figsize is None else figsize
         plt.figure(figsize=figsize)
         pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog='dot')
-        nx.draw(self.graph, pos=pos, with_labels=True)
+        nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)

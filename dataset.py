@@ -25,6 +25,12 @@ class Dataset():
     def __repr__(self):
         return str(self)
 
+    def __len__(self):
+        return len(self.all_images)
+
+    def __getitem__(self, idx):
+        return self.all_images[idx]
+
     def read_image(self, image_path, gray=False):
         if not (isfile(image_path)):
             image_path = os.path.abspath(join(self.path, image_path))
