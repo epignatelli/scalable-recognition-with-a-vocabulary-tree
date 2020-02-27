@@ -11,7 +11,7 @@ from features import Descriptor
 class Dataset():
     def __init__(self, folder="data/jpg"):
         self.path = folder
-        self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))][:5]
+        self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         self.descriptor = Descriptor()
 
     def __str__(self):
@@ -56,7 +56,7 @@ class Dataset():
     def extract_features(self, image_path):
         image = self.read_image(image_path)
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        keypoints, blobs = self.descriptor.find_keypoints(image)
+        _keypoints, blobs = self.descriptor.find_keypoints(image)
         patches = self.descriptor.extract_patches(gray, blobs)
         descriptors = [self.descriptor.describe(patch).squeeze().cpu().numpy() for patch in patches]
         return descriptors

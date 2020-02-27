@@ -91,7 +91,7 @@ class Descriptor(object):
         Note that we implement vlfeat version of sift
         """
         with torch.no_grad():
-            return self.sift(torch.as_tensor(patch, dtype=torch.float32).expand(1, 1, *patch.shape))
+            return self.sift(torch.as_tensor(patch, dtype=torch.float32).expand(1, 1, *patch.shape))[0].numpy()
 
     @staticmethod
     def show_mser(img, blobs, bounding_boxes = None, ellipses = None):
