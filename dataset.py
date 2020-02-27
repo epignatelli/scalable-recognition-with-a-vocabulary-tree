@@ -26,8 +26,9 @@ class Dataset():
         return str(self)
 
     def read_image(self, image_path, gray=False):
-        path = os.path.abspath(image_path)
-        image = cv2.imread(path)
+        if not (isfile(image_path)):
+            image_path = os.path.abspath(join(self.path, image_path))
+        image = cv2.imread(image_path)
         image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
         if gray:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
