@@ -31,7 +31,7 @@ class Descriptor(object):
         blobs, bboxes = self.mser.detectRegions(gray)
         return kp, blobs
 
-    def extract_patches(self, img, blobs, square=True, fit_ellipse=True):
+    def extract_patches(self, img, blobs, square=True, fit_ellipse=False):
         """Extracts the patches associated to the keypoints of the MSER
         descriptors.
 
@@ -43,7 +43,7 @@ class Descriptor(object):
             [np.array] -- List of patches
         """
         patches = []
-        for rect in rectangles:
+        for blob in blobs:
             if fit_ellipse:
                 rect = cv2.fitEllipse(blob)
             else:
@@ -80,13 +80,8 @@ class Descriptor(object):
         Computes the SIFT descriptor on the given path.
         Note that we implement vlfeat version of sift
         """
-        return self.sift(torch.as_tensor(patch))
-
-    def extract_features(self, image):
-        keypoints, blobs = self.find_keypoints(image)
-        patches = self.extract_patches(image, blobs)
-        descriptors = [self.describe(patch) for patch in patches]
-        return descriptors
+        with torch.no_grad():
+            return self.sift(torch.as_tensor(patch, dtype=torch.float32).expand(1, 1, *patch.shape))
 
     @staticmethod
     def show_blobs(img, blobs):

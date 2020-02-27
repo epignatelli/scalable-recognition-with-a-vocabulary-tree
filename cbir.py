@@ -8,11 +8,14 @@ import random
 import networkx as nx
 import matplotlib.pyplot as plt
 from features import Descriptor
+from dataset import Dataset
+import multiprocessing
+import time
 
 
 class CBIR(object):
-    def __init__(self, dataset, n_branches, depth):
-        self.dataset = dataset
+    def __init__(self, root, n_branches, depth):
+        self.dataset = Dataset(root)
         self.n_branches = n_branches
         self.depth = depth
         self.tree = {}
@@ -21,23 +24,33 @@ class CBIR(object):
         # private:
         self._current_index = 0
 
-        # build graph
+        # init graph
         self.graph = nx.DiGraph()
-        self.fit()
 
+        # build tree
+        self.fit()
+        self.draw()
+        plt.show()
         # compute inverted index
-        self.index()
+        # self.index()
         return
 
     def extract_features(self, image=None):
-        # dummy features to test
-        # replace with Antonio's
-        if (image is None):
-            ones = np.ones(1)
-#             return np.array([ones, ones * 2, ones * 10, ones * 11])
-            return np.random.randn(4000, 128)
+        if (image is not None):
+            return self.dataset.extract_features(image)
         else:
-            return sift(image)
+            features = []
+            times = []
+            total = len(self.dataset.all_images)
+            for i, path in enumerate(self.dataset.all_images):
+                start = time.time()
+                features.extend(self.dataset.extract_features(path))
+                times.append(time.time() - start)
+                avg = np.mean(times)
+                eta = avg * total - avg * (i + 1)
+                print("Extracted features %d/%d from image %s - ETA: %ss" % (i + 1, total, path, eta), end="\r")
+            print("\n%d features extracted" % len(features))
+            return np.array(features)
 
     def fit(self, features=None, node=0, root=None, current_depth=0):
         """
@@ -88,8 +101,9 @@ class CBIR(object):
         This function also calculates the weights for each node as entropy. 
         """
         # create inverted index
+        print("Generating index")
         for image_path in self.dataset.all_images:
-            self.encode(image_path, return_graph=False)
+            self.propagate(image_path)
 
         # set weights of node based on entropy
         N = len(self.dataset)
@@ -98,9 +112,10 @@ class CBIR(object):
             if N_i:  # if the node is visited, calculate the weight, otherwise, leave it as initialised
                 self.graph.nodes[node_id]["w"] = np.log(
                     N / N_i)  # calculate entropy
+        print("Inverted index generated")
         return
 
-    def encode(self, image_path):
+    def propagate(self, image_path):
         """
         Encodes an image into a set of paths on the tree.
         The vector representation is the values list of a key value pair,
@@ -111,23 +126,19 @@ class CBIR(object):
         Return:
             (networkx.DiGraph): The tree representing the encoded image
         """
-        points, features = self.extract_features(image_path)
-        image_id = self.database.get_image_id(image_path)
+        print("Creating inverted index for %s" % image_path)
+        features = self.extract_features(image_path)
+        image_id = self.dataset.get_image_id(image_path)
         for feature in features:
             path = self.propagate_feature(feature)
             for i in range(len(path)):
                 node = path[i]
-                # this automatically skips if node is already there, so attributes are preserved
-                self.graph.add_node(node)
                 # add tfidf
                 if image_id not in self.graph.nodes[node]:
                     self.graph.nodes[node][image_id] = 1
                 else:
                     self.graph.nodes[node][image_id] += 1
-                # add links
-                if i != len(path) - 2:
-                    self.graph.add_path(path[i], path[i + 1])
-        return self.get_encoded(image_id)
+        return
 
     def propagate_feature(self, feature, node=0):
         """
@@ -139,17 +150,18 @@ class CBIR(object):
         """
         min_dist = float("inf")
         path = [node]
-        while len(self.tree[node]) != 0:  # recur
-            for child in self.tree[node]:
-                distance = np.linalg.norm(
-                    [self.nodes[child] - feature])  # l1 norm
+        while self.graph.out_degree(node):  # stop if leaf
+            print(node, self.graph.out_degree(child))
+            for child in self.graph[node]:
+                distance = np.linalg.norm([self.nodes[child] - feature])  # l1 norm
                 if distance < min_dist:
+                    # print(f"{node} to {child} is distant {distance}")
                     min_dist = distance
                     node = child
                     path.append(child)
         return path
 
-    def get_encoded(self, image_id, return_graph=True):
+    def encode(self, image_id, return_graph=True):
         subgraph = self.graph.subgraph(
             [k for k, v in a.nodes(data=image_id, default=None) if v is not None])
         if return_graph:
@@ -163,11 +175,11 @@ class CBIR(object):
         """
         Measures the similatiries between the set of paths of the features of each image.
         """
-        db_id = self.database.get_image_id(database_image_path)
-        query_id = self.database.get_image_id(query_image_path)
+        db_id = self.dataset.get_image_id(database_image_path)
+        query_id = self.dataset.get_image_id(query_image_path)
 
         # propagate the query down the tree
-        self.encode(query_image_path)
+        self.propagate(query_image_path)
 
         # get the vectors of the images
         d = self.get_encoded(db_id, return_graph=False)
@@ -180,7 +192,7 @@ class CBIR(object):
     def retrieve(self, query_image_path, n=4):
         scores = {}
         for database_image_path in self.dataset.all_images:
-            db_id = self.database.get_image_id(database_image_path)
+            db_id = self.dataset.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = sorted(scores, key=scores.__getitem__)
         return scores.keys()[:n]
@@ -189,4 +201,4 @@ class CBIR(object):
         figsize = (30, 10) if figsize is None else figsize
         plt.figure(figsize=figsize)
         pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog='dot')
-        nx.draw(self.graph, pos=pos)
+        nx.draw(self.graph, pos=pos, with_labels=True)
