@@ -31,24 +31,33 @@ class Descriptor(object):
         blobs, bboxes = self.mser.detectRegions(gray)
         return kp, blobs
 
-    def extract_patches(self, img, blobs, square=True, fit_ellipse=False):
+    def fit_bounding_box_to_mser(self, blobs):
+        return self.fit_poligon_to_blobs(blobs, cv2.minAreaRect)
+
+    def fit_ellipses_to_mser(self, blobs):
+        return self.fit_poligon_to_blobs(blobs, cv2.fitEllipse)
+
+    @staticmethod
+    def fit_poligon_to_blobs(blobs, poligon_fit):
+        poligons = []
+        for blob in blobs:
+            poligons.append(poligon_fit(blob))
+        return poligons
+
+    def extract_patches(self, img, poligons, square=True):
         """Extracts the patches associated to the keypoints of the MSER
         descriptors.
 
         Arguments:
             img {np.array} -- Image from which the patches are extracted
-            blobs -- Bounding boxes as returned by the function mser.detectRegions()
+            poligons -- Bounding boxes as returned by the function 
+                        fit_bounding_box_to_mser() or fit_ellipses_to_mser()
 
         Returns:
             [np.array] -- List of patches
         """
         patches = []
-        for blob in blobs:
-            if fit_ellipse:
-                rect = cv2.fitEllipse(blob)
-            else:
-                rect = cv2.minAreaRect(blob)
-
+        for rect in poligons:
             # rotate img
             angle = rect[2]
             rows, cols = img.shape[0], img.shape[1]
@@ -65,6 +74,7 @@ class Descriptor(object):
             img_crop = img_rot[pts[1][1]:pts[0][1],
                                pts[1][0]:pts[2][0]]
 
+            # TODO: check why this happens
             if img_crop.size == 0:
                 continue
 
@@ -87,30 +97,34 @@ class Descriptor(object):
             return self.sift(torch.as_tensor(patches, dtype=torch.float32).unsqueeze(1)).squeeze().cpu().numpy()
 
     @staticmethod
-    def show_blobs(img, blobs):
+    def show_mser(img, blobs, bounding_boxes = None, ellipses = None):
+        # Drawing ellipses and bounding boxes on the image
         canvas1 = img.copy()
-        canvas3 = np.zeros_like(img)
+        if bounding_boxes is not None:
+            for rect in bounding_boxes:
+                box = cv2.boxPoints(rect)
+                # convert all coordinates floating point values to int
+                box = np.int0(box)
+                # draw a red 'nghien' rectangle
+                canvas1 = cv2.drawContours(canvas1, [box], 0, (0, 255, 0), 1)
+        if ellipses is not None:
+            for rect in ellipses:
+                cv2.ellipse(canvas1, rect, (255, 0, 0))
+
+        # Drawing all the blobs on their own image
+        canvas2 = np.zeros_like(img)
         for cnt in blobs:
             # Show in separate image
             xx = cnt[:, 0]
             yy = cnt[:, 1]
             color = [random.randint(0, 255) for _ in range(3)]
-            canvas3[yy, xx] = color
-
-            # Show as BBox
-            # get the min area rect
-            rect = cv2.minAreaRect(cnt)
-            box = cv2.boxPoints(rect)
-            # convert all coordinates floating point values to int
-            box = np.int0(box)
-            # draw a red 'nghien' rectangle
-            canvas1 = cv2.drawContours(canvas1, [box], 0, (0, 255, 0), 1)
+            canvas2[yy, xx] = color
 
         # Show
         plt.subplot(121)
         plt.imshow(canvas1)
         plt.subplot(122)
-        plt.imshow(canvas3)
+        plt.imshow(canvas2)
 
     @staticmethod
     def show_random_descriptors(img, patches, descriptors, N=5):
@@ -154,6 +168,6 @@ class Descriptor(object):
 
     @staticmethod
     def show_corners_on_image(img, corners):
-        img_3channels = cv2.cvtColor(img / 255, cv2.COLOR_GRAY2RGB)
-        img_3channels[corners] = [1, 0, 0]
+        img_3channels = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        img_3channels[corners] = [255, 0, 0]
         plt.imshow(img_3channels)
