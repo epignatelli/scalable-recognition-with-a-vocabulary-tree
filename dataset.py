@@ -62,7 +62,7 @@ class Dataset():
     def extract_features(self, image_path):
         image = self.read_image(image_path)
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        keypoints, blobs = self.descriptor.find_keypoints(image)
+        _keypoints, blobs = self.descriptor.find_keypoints(image)
         patches = self.descriptor.extract_patches(gray, blobs)
         descriptors = [self.descriptor.describe(patch).squeeze().cpu().numpy() for patch in patches]
         return descriptors
