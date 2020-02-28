@@ -4,6 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from dataset import Dataset
 import time
+import warnings
 
 
 class CBIR(object):
@@ -21,9 +22,11 @@ class CBIR(object):
         self.graph = nx.DiGraph()
 
         # build the tree
+        warnings.filterwarnings("ignore")
         self.fit()
-        self.draw()
-        plt.show()
+        # self.draw()
+        # plt.show()
+        warnings.filterwarnings("default")
 
         # compute inverted index
         self.index()
@@ -42,7 +45,7 @@ class CBIR(object):
             times.append(time.time() - start)
             avg = np.mean(times)
             eta = avg * total - avg * (i + 1)
-            print("Extracted features %d/%d from image %s - ETA: %2fs" %
+            print("Extracting features %d/%d from image %s - ETA: %2fs" %
                   (i + 1, total, path, eta), end="\r")
         print("\n%d features extracted" % len(features))
         return np.array(features)
@@ -51,10 +54,8 @@ class CBIR(object):
         """
         Generates a hierarchical vocabulary tree representation of some input features
         using hierarchical k-means clustering.
-        This function populates two class fields:
-            `self.tree`, as Dict[int, List[int]], where the key is the id of the root node
-        and the value is a list of children nodes, and
-             `self.nodes` as a dictionary Dict[int, numpy.ndarray] that stores the actual value for each node
+        This function populates the graph and stores the value of the features in
+        `self.nodes` as a dictionary Dict[int, numpy.ndarray] that stores the actual value for each node
         Args:
             features (numpy.ndarray): a two dimensional vector of input features where dim 0 is samples and dim 1 is features
             node (int): current node id to set
@@ -190,8 +191,21 @@ class CBIR(object):
         for database_image_path in self.dataset.all_images:
             db_id = self.dataset.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
-        sorted_scores = sorted(scores, key=scores.__getitem__)
+        sorted_scores = {k: v for k, v in sorted(
+            scores.items(), key=lambda item: item[1])}
         return sorted_scores
+
+    def show_results(self, query_path, scores_dict, n=4):
+        fig, ax = plt.subplots(1, n + 1, figsize=(20, 10))
+        ax[0].axis("off")
+        ax[0].imshow(self.dataset.read_image(query_path))
+        ax[0].set_title("Query image")
+        img_ids = list(scores_dict.keys())
+        for i in range(1, len(ax)):
+            ax[i].axis("off")
+            ax[i].imshow(self.dataset.read_image(f"C:\\Users\\epignatel\\Documents\\repos\\sberbank\\data\\jpg\\{img_ids[i - 1]}.jpg"))
+            ax[i].set_title("Retrieved image %d" % i)
+        return
 
     def draw(self, figsize=None, node_color=None):
         figsize = (30, 10) if figsize is None else figsize
