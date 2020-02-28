@@ -4,6 +4,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import random
+import h5py
 import matplotlib.pyplot as plt
 from features import Descriptor
 
@@ -61,12 +62,43 @@ class Dataset():
         return os.path.splitext(os.path.basename(image_path))[0]
 
     def extract_features(self, image_path):
+        # check if the feature can be retrieved from disk
+        if self.is_stored(image_path):
+            hdf5_path = os.path.join(self.path, "..", "features.hdf5")
+            with h5py.File(hdf5_path, "r") as file:
+                image_id = self.get_image_id(image_path)
+                features = np.array(file[image_id])
+            return features
+
+        # if not, calculate the feature
         image = self.read_image(image_path, gray=False)
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         keypoints, blobs = self.descriptor.find_keypoints(image)
         patches = self.descriptor.extract_patches(gray, blobs)
-        descriptors = [self.descriptor.describe(patch).squeeze().cpu().numpy() for patch in patches]
-        return descriptors
+        features = [self.descriptor.describe(patch).squeeze().cpu().numpy() for patch in patches]
+        # once, calculated, store the features if they're not on disk
+        # you can force restoring with force=True
+        self.store_features(image_path, features)
+
+        # return
+        return features
+
+    def store_features(self, image_path, features, force=False):
+        if self.is_stored(image_path) and not force:
+            return
+        image_id = self.get_image_id(image_path)
+        with h5py.File(os.path.join(self.path, "..", "features.hdf5"), "a") as file:
+            features = np.array(features)
+            file.create_dataset(image_id, features.shape, data=features)
+        return
+
+    def is_stored(self, image_path):
+        hdf5_path = os.path.join(self.path, "..", "features.hdf5")
+        if not os.path.isfile(hdf5_path):
+            return False
+        with h5py.File(hdf5_path, "r") as file:
+            return self.get_image_id(image_path) in file
+        return False
 
     @staticmethod
     def show_image(img, gray=False, **kwargs):
