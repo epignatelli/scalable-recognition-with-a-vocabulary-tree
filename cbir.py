@@ -8,12 +8,13 @@ import warnings
 
 
 class CBIR(object):
-    def __init__(self, root, n_branches, depth):
-        self.dataset = Dataset(root)
+    def __init__(self, root, n_branches, depth, sift_implementation="pytorch"):
+        self.dataset = Dataset(root, sift_implementation=sift_implementation)
         self.n_branches = n_branches
         self.depth = depth
         self.tree = {}
         self.nodes = {}
+        self.indexed = []
 
         # private:
         self._current_index = 0
@@ -132,6 +133,7 @@ class CBIR(object):
                     self.graph.nodes[node][image_id] = 1
                 else:
                     self.graph.nodes[node][image_id] += 1
+        self.indexed.append(image_id)
         return
 
     def propagate_feature(self, feature, node=0):
@@ -151,7 +153,7 @@ class CBIR(object):
                 if distance < min_dist:
                     min_dist = distance
                     node = child
-                    path.append(child)
+                path.append(child)
         return path
 
     def encode(self, image_id, return_graph=True):
@@ -167,7 +169,7 @@ class CBIR(object):
         weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
         tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
         tfidf_normalised = tfidf / np.linalg.norm(tfidf)  # l2 norm
-        return tfidf_normalised * weights
+        return tfidf_normalised# * weights
 
     def score(self, database_image_path, query_image_path):
         """

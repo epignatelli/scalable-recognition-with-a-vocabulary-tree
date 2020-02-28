@@ -48,7 +48,7 @@ class Descriptor(object):
                 rect = cv2.fitEllipse(blob)
             else:
                 rect = cv2.minAreaRect(blob)
-                
+
             # rotate img
             angle = rect[2]
             rows, cols = img.shape[0], img.shape[1]
@@ -75,13 +75,16 @@ class Descriptor(object):
             patches.append(resized)
         return patches
 
-    def describe(self, patch):
+    def describe(self, image):
         """
         Computes the SIFT descriptor on the given path.
         Note that we implement vlfeat version of sift
         """
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        keypoints, blobs = self.find_keypoints(image)
+        patches = self.extract_patches(gray, blobs)
         with torch.no_grad():
-            return self.sift(torch.as_tensor(patch, dtype=torch.float32).expand(1, 1, *patch.shape))
+            return self.sift(torch.as_tensor(patches, dtype=torch.float32).unsqueeze(1)).squeeze().cpu().numpy()
 
     @staticmethod
     def show_blobs(img, blobs):

@@ -7,13 +7,18 @@ import random
 import h5py
 import matplotlib.pyplot as plt
 from features import Descriptor
+from ezsift import EzSIFT
 
 
 class Dataset():
-    def __init__(self, folder="data/jpg"):
+    def __init__(self, folder="data/jpg", sift_implementation="pytorch"):
         self.path = folder
         self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))]
-        self.descriptor = Descriptor()
+        self.sift_implementation = sift_implementation
+        if sift_implementation.lower() == "ezsift":
+            self.descriptor = EzSIFT()
+        else:
+            self.descriptor = Descriptor()
 
     def __str__(self):
         images = []
@@ -64,18 +69,16 @@ class Dataset():
     def extract_features(self, image_path):
         # check if the feature can be retrieved from disk
         if self.is_stored(image_path):
-            hdf5_path = os.path.join(self.path, "..", "features.hdf5")
+            hdf5_path = os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation)
             with h5py.File(hdf5_path, "r") as file:
                 image_id = self.get_image_id(image_path)
                 features = np.array(file[image_id])
-            return features
+            return features / np.linalg.norm(features)
 
         # if not, calculate the feature
         image = self.read_image(image_path, gray=False)
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        keypoints, blobs = self.descriptor.find_keypoints(image)
-        patches = self.descriptor.extract_patches(gray, blobs)
-        features = [self.descriptor.describe(patch).squeeze().cpu().numpy() for patch in patches]
+        features = self.descriptor.describe(image)
+
         # once, calculated, store the features if they're not on disk
         # you can force restoring with force=True
         self.store_features(image_path, features)
@@ -87,13 +90,13 @@ class Dataset():
         if self.is_stored(image_path) and not force:
             return
         image_id = self.get_image_id(image_path)
-        with h5py.File(os.path.join(self.path, "..", "features.hdf5"), "a") as file:
+        with h5py.File(os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation), "a") as file:
             features = np.array(features)
             file.create_dataset(image_id, features.shape, data=features)
         return
 
     def is_stored(self, image_path):
-        hdf5_path = os.path.join(self.path, "..", "features.hdf5")
+        hdf5_path = os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation)
         if not os.path.isfile(hdf5_path):
             return False
         with h5py.File(hdf5_path, "r") as file:
