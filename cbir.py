@@ -20,10 +20,11 @@ class CBIR(object):
         # init graph
         self.graph = nx.DiGraph()
 
-        # build tree
+        # build the tree
         self.fit()
         self.draw()
         plt.show()
+
         # compute inverted index
         self.index()
         return
@@ -31,20 +32,20 @@ class CBIR(object):
     def extract_features(self, image=None):
         if (image is not None):
             return self.dataset.extract_features(image)
-        else:
-            features = []
-            times = []
-            total = len(self.dataset.all_images)
-            for i, path in enumerate(self.dataset.all_images):
-                start = time.time()
-                features.extend(self.dataset.extract_features(path))
-                times.append(time.time() - start)
-                avg = np.mean(times)
-                eta = avg * total - avg * (i + 1)
-                print("Extracted features %d/%d from image %s - ETA: %2fs" %
-                      (i + 1, total, path, eta), end="\r")
-            print("\n%d features extracted" % len(features))
-            return np.array(features)
+
+        features = []
+        times = []
+        total = len(self.dataset.all_images)
+        for i, path in enumerate(self.dataset.all_images):
+            start = time.time()
+            features.extend(self.dataset.extract_features(path))
+            times.append(time.time() - start)
+            avg = np.mean(times)
+            eta = avg * total - avg * (i + 1)
+            print("Extracted features %d/%d from image %s - ETA: %2fs" %
+                  (i + 1, total, path, eta), end="\r")
+        print("\n%d features extracted" % len(features))
+        return np.array(features)
 
     def fit(self, features=None, node=0, root=None, current_depth=0):
         """
@@ -106,7 +107,7 @@ class CBIR(object):
             if N_i:  # if the node is visited, calculate the weight, otherwise, leave it as initialised
                 self.graph.nodes[node_id]["w"] = np.log(
                     N / N_i)  # calculate entropy
-        print("Inverted index generated")
+        print("\nInverted index generated")
         return
 
     def propagate(self, image_path):
@@ -118,7 +119,7 @@ class CBIR(object):
         Args:
             image_path (str): path of the image to encode
         """
-        print("Creating inverted index for %s" % image_path)
+        print("Indexing %s" % image_path, end="\r")
         features = self.extract_features(image_path)
         image_id = self.dataset.get_image_id(image_path)
         for feature in features:
@@ -134,41 +135,38 @@ class CBIR(object):
 
     def propagate_feature(self, feature, node=0):
         """
-        Propagates a feature, down the tree, and returns the closest node.
+        Propagates a feature, down the tree, and returns the paths in the form of node ids.
         Args:
             feature (numpy.ndarray): The feature to lookup
-            root (int): Node id to start the search from.
+            root (List[int]): Node id to start the search from.
                         Default is 0, meaning the very root of the tree
         """
         path = [node]
-        while self.graph.out_degree(node):  # stop if leaf
+        while self.graph.out_degree(node):  # recur, stop if leaf
             min_dist = float("inf")
-            # print(node, self.graph.out_degree(node))
             for child in self.graph[node]:
                 distance = np.linalg.norm(
                     [self.nodes[child] - feature])  # l1 norm
-                # print(distance, ">", min_dist, ":", distance > min_dist)
                 if distance < min_dist:
                     min_dist = distance
                     node = child
                     path.append(child)
         return path
 
-    def encode(self, image_id, return_graph=True, draw=True):
+    def encode(self, image_id, return_graph=True):
         if return_graph:
             subgraph = self.graph.subgraph(
                 [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
-            if draw:
-                colours = ["C0"] * len(self.graph.nodes)
-                for node in subgraph.nodes:
-                    colours[node] = "C3"
-                self.draw(node_color=colours)
+            colours = ["C0"] * len(self.graph.nodes)
+            for node in subgraph.nodes:
+                colours[node] = "C3"
+            self.draw(node_color=colours)
             return subgraph
 
         weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
         tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
-        tfidf = tfidf / np.linalg.norm(tfidf)  # l2 norm
-        return tfidf * weights
+        tfidf_normalised = tfidf / np.linalg.norm(tfidf)  # l2 norm
+        return tfidf_normalised * weights
 
     def score(self, database_image_path, query_image_path):
         """
@@ -193,7 +191,7 @@ class CBIR(object):
             db_id = self.dataset.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = sorted(scores, key=scores.__getitem__)
-        return sorted_scores.keys()[:n]
+        return sorted_scores
 
     def draw(self, figsize=None, node_color=None):
         figsize = (30, 10) if figsize is None else figsize
