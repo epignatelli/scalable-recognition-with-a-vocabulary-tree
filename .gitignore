@@ -1,5 +1,9 @@
 # data
-data/
+data/jpg
+data/siftgeo
+data/jpg1.tar.gz
+data/jpg2.tar.gz
+data/siftgeo.tar.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
