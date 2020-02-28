@@ -9,7 +9,8 @@ from pytorch_sift.pytorch_sift import SIFTNet
 
 
 class Descriptor(object):
-    def __init__(self, patch_size=65, mser_min_area=4000, mser_max_area=200000):
+    def __init__(self, patch_size=65, mser_min_area=4000,
+                 mser_max_area=200000):
         # this sets self.describe to the SIFTNet callable
         self.patch_size = (int(patch_size), int(patch_size))
         self.sift = SIFTNet(patch_size=patch_size,
@@ -17,8 +18,9 @@ class Descriptor(object):
 
         # Creating the detector and setting some properties
         # see --> https://docs.opencv.org/3.4/d3/d28/classcv_1_1MSER.html
-        self.mser = cv2.MSER_create(
-            _max_variation=0.5, _min_area=mser_min_area, _max_area=mser_max_area)
+        self.mser = cv2.MSER_create(_max_variation=0.5,
+                                    _min_area=mser_min_area,
+                                    _max_area=mser_max_area)
 
     def find_keypoints(self, image):
         # Making the images grayscale
@@ -58,34 +60,72 @@ class Descriptor(object):
         """
         patches = []
         for rect in poligons:
-            # rotate img
-            angle = rect[2]
-            rows, cols = img.shape[0], img.shape[1]
-            M = cv2.getRotationMatrix2D((cols/2, rows/2), angle, 1)
-            img_rot = cv2.warpAffine(img, M, (cols, rows))
+            # Evaluates patch orientation
+            scale_factor = 2
+            rect_bigger = (rect[0],
+                           (scale_factor * rect[1][0], scale_factor * rect[1][1]),
+                           rect[2])
+            big_patch = self.crop_rectangle(
+                img, rect_bigger, (self.patch_size[0]*scale_factor, self.patch_size[1]*scale_factor))
+            patch_angle = self.find_image_orientation(big_patch, self.patch_size[0])
 
-            # rotate bounding box
-            rect0 = (rect[0], rect[1], 0.0)
-            box = cv2.boxPoints(rect0)
-            pts = np.int0(cv2.transform(np.array([box]), M))[0]
-            pts[pts < 0] = 0
-
-            # crop
-            img_crop = img_rot[pts[1][1]:pts[0][1],
-                               pts[1][0]:pts[2][0]]
-
-            # TODO: check why this happens
-            if img_crop.size == 0:
-                continue
-
-            # Squares the image
-            resized = cv2.resize(img_crop, self.patch_size,
-                                 interpolation=cv2.INTER_LANCZOS4)
-
-            patches.append(resized)
+            # Extract the patch from the bigger patch after rotating it
+            scale_factor = 1.3
+            rect_bigger = (rect[0],
+                           (scale_factor * rect[1][0], scale_factor * rect[1][1]),
+                           rect[2])
+            feat_patch = self.crop_rectangle(
+                img, rect_bigger, (int(self.patch_size[0]*scale_factor), int(self.patch_size[1]*scale_factor)))            
+            patches.append(feat_patch)
         return patches
 
-    def describe(self, image):
+    @staticmethod
+    def find_image_orientation(img, sigma, bins=36):
+        """Follows https://aishack.in/tutorials/sift-scale-invariant-feature-transform-keypoint-orientation/
+
+        The gradients are blurred with a sigma equal to the windows size for SIFT, that is self.patch_size
+        """
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        blur = cv2.GaussianBlur(gray, (sigma, sigma), 0)
+        dX = cv2.Sobel(blur, cv2.CV_32F, 1, 0, (3, 3))
+        dY = cv2.Sobel(blur, cv2.CV_32F, 0, 1, (3, 3))
+        magnitude = np.sqrt(dX**2 + dY**2)
+        angle = 0*np.arctan2(dY, dX)*180./np.pi  # In degrees
+
+        # Binning and extracting biggest rotation angle
+        hist, bin_edges = np.histogram(angle, range=(-180, 180), bins=bins, weights=magnitude)
+        max_hist_index = np.argmax(hist)
+        angle = (bin_edges[max_hist_index] + bin_edges[max_hist_index+1])/2
+        return angle
+
+    @staticmethod
+    def crop_rectangle(img, rect, patch_size):
+        # rotate img
+        angle = rect[2]
+        rows, cols = img.shape[0], img.shape[1]
+        M = cv2.getRotationMatrix2D((cols/2, rows/2), angle, 1)
+        img_rot = cv2.warpAffine(img, M, (cols, rows))
+
+        # rotate a bigger bounding box
+        rect0 = (rect[0], rect[1], 0.0)
+        box = cv2.boxPoints(rect0)
+        pts = np.int0(cv2.transform(np.array([box]), M))[0]
+        pts[pts < 0] = 0
+
+        # crop
+        img_crop = img_rot[pts[1][1]:pts[0][1],
+                           pts[1][0]:pts[2][0]]
+
+        # TODO: check why this happens
+        if img_crop.size == 0:
+            return None
+
+        # Squares the patch
+        patch = cv2.resize(img_crop, patch_size,
+                           interpolation=cv2.INTER_LANCZOS4)
+        return patch
+
+    def describe(self, patch):
         """
         Computes the SIFT descriptor on the given path.
         Note that we implement vlfeat version of sift
@@ -97,7 +137,7 @@ class Descriptor(object):
             return self.sift(torch.as_tensor(patches, dtype=torch.float32).unsqueeze(1)).squeeze().cpu().numpy()
 
     @staticmethod
-    def show_mser(img, blobs, bounding_boxes = None, ellipses = None):
+    def show_mser(img, blobs, bounding_boxes=None, ellipses=None):
         # Drawing ellipses and bounding boxes on the image
         canvas1 = img.copy()
         if bounding_boxes is not None:
