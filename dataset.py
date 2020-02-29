@@ -51,13 +51,11 @@ class Dataset():
         else:
             return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    def get_image_by_name(self, image_name=None, gray=True):
-        path = os.path.join(self.path, image_name)
-        print(path)
-        return self.read_image(path)
+    def get_image_by_name(self, image_name=None):
+        return self.read_image(image_name)
 
-    def get_random_image(self, gray=False):
-        return self.get_image_by_name(random.choice(self.all_images), gray)
+    def get_random_image(self):
+        return self.get_image_by_name(random.choice(self.all_images))
 
     def get_image_id(self, image_path):
         """
