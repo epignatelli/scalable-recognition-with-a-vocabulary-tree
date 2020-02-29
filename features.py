@@ -9,7 +9,7 @@ from pytorch_sift.pytorch_sift import SIFTNet
 
 
 class Descriptor(object):
-    def __init__(self, patch_size=65, mser_min_area=4000,
+    def __init__(self, patch_size=65, mser_min_area=100,
                  mser_max_area=200000):
         # this sets self.describe to the SIFTNet callable
         self.patch_size = (int(patch_size), int(patch_size))
@@ -23,15 +23,9 @@ class Descriptor(object):
                                     _max_area=mser_max_area)
 
     def find_keypoints(self, image):
-        # Making the images grayscale
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-
-        # Detecting the keypoints
-        kp = self.mser.detect(image)
-
         # Getting the mser regions for drawing Bounding-Box
-        blobs, bboxes = self.mser.detectRegions(gray)
-        return kp, blobs
+        blobs, bboxes = self.mser.detectRegions(image)
+        return blobs
 
     def fit_bounding_box_to_mser(self, blobs):
         return self.fit_poligon_to_blobs(blobs, cv2.minAreaRect)
@@ -52,7 +46,7 @@ class Descriptor(object):
 
         Arguments:
             img {np.array} -- Image from which the patches are extracted
-            poligons -- Bounding boxes as returned by the function 
+            poligons -- Bounding boxes as returned by the function
                         fit_bounding_box_to_mser() or fit_ellipses_to_mser()
 
         Returns:
@@ -124,7 +118,7 @@ class Descriptor(object):
         Note that we implement vlfeat version of sift
         """
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        keypoints, blobs = self.find_keypoints(image)
+        blobs = self.find_keypoints(image)
         rectangles = self.fit_bounding_box_to_mser(blobs)
         patches = self.extract_patches(gray, rectangles)
         return self.extract_features(patches)
