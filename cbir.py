@@ -182,7 +182,7 @@ class CBIR(object):
         weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
         tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
 
-        tfidf_normalised = tfidf / np.linalg.norm(tfidf)  # l2 norm
+        tfidf_normalised = tfidf / np.linalg.norm(tfidf, ord=1)  # l1 norm
         return tfidf_normalised  # * weights
 
     def score(self, first_image_path, second_image_path):
