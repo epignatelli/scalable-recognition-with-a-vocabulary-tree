@@ -61,16 +61,18 @@ class Descriptor(object):
         patches = []
         for rect in poligons:
             # Evaluates patch orientation
-            scale_factor = 2
+            scale_factor = 3
             rect_bigger = (rect[0],
                            (scale_factor * rect[1][0], scale_factor * rect[1][1]),
                            rect[2])
             big_patch = self.crop_rectangle(
                 img, rect_bigger, (self.patch_size[0]*scale_factor, self.patch_size[1]*scale_factor))
-            patch_angle = self.find_image_orientation(big_patch, self.patch_size[0])
+            if big_patch is None:
+                continue 
+            patch_angle = self.find_image_orientation(big_patch, int(self.patch_size[0]*1.5))
 
             # Extract the patch from the bigger patch after rotating it
-            scale_factor = 1.3
+            scale_factor = 1.5
             rect_bigger = (rect[0],
                            (scale_factor * rect[1][0], scale_factor * rect[1][1]),
                            rect[2])
