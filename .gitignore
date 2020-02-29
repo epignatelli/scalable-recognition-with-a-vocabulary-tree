@@ -4,6 +4,7 @@ data/siftgeo
 data/jpg1.tar.gz
 data/jpg2.tar.gz
 data/siftgeo.tar.gz
+data/features_ezsift.hdf5
 data/do_no_delete_me.jpg
 data/do_no_delete_me.pgm
 data/do_no_delete_me.pgm_sift_key.key
