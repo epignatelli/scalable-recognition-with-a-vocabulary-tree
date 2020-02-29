@@ -31,11 +31,19 @@ class Dataset():
     def __repr__(self):
         return str(self)
 
-    def read_image(self, image_name, gray=False):
-        path = os.path.join(self.path, image_name)
-        print(path)
-        path = os.path.abspath(path)
-        image = cv2.imread(path)
+    def __len__(self):
+        return len(self.all_images)
+
+    def __getitem__(self, idx):
+        if type(idx) is str:
+            return self.get_image_by_name(idx)
+        else:
+            return self.all_images[idx]
+
+    def read_image(self, image_path, gray=False):
+        if not (isfile(image_path)):
+            image_path = os.path.abspath(join(self.path, image_path))
+        image = cv2.imread(image_path)
         image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
         if gray:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -60,12 +68,41 @@ class Dataset():
         return os.path.splitext(os.path.basename(image_path))[0]
 
     def extract_features(self, image_path):
-        image = self.read_image(image_path)
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        _keypoints, blobs = self.descriptor.find_keypoints(image)
-        patches = self.descriptor.extract_patches(gray, blobs)
-        descriptors = [self.descriptor.describe(patch).squeeze().cpu().numpy() for patch in patches]
-        return descriptors
+        # check if the feature can be retrieved from disk
+        if self.is_stored(image_path):
+            hdf5_path = os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation)
+            with h5py.File(hdf5_path, "r") as file:
+                image_id = self.get_image_id(image_path)
+                features = np.array(file[image_id])
+            return features / np.linalg.norm(features)
+
+        # if not, calculate the feature
+        image = self.read_image(image_path, gray=False)
+        features = self.descriptor.describe(image)
+
+        # once, calculated, store the features if they're not on disk
+        # you can force restoring with force=True
+        self.store_features(image_path, features)
+
+        # return
+        return features
+
+    def store_features(self, image_path, features, force=False):
+        if self.is_stored(image_path) and not force:
+            return
+        image_id = self.get_image_id(image_path)
+        with h5py.File(os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation), "a") as file:
+            features = np.array(features)
+            file.create_dataset(image_id, features.shape, data=features)
+        return
+
+    def is_stored(self, image_path):
+        hdf5_path = os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation)
+        if not os.path.isfile(hdf5_path):
+            return False
+        with h5py.File(hdf5_path, "r") as file:
+            return self.get_image_id(image_path) in file
+        return False
 
     @staticmethod
     def show_image(img, gray=False, **kwargs):

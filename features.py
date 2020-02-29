@@ -92,7 +92,7 @@ class Descriptor(object):
         dX = cv2.Sobel(blur, cv2.CV_32F, 1, 0, (3, 3))
         dY = cv2.Sobel(blur, cv2.CV_32F, 0, 1, (3, 3))
         magnitude = np.sqrt(dX**2 + dY**2)
-        angle = 0*np.arctan2(dY, dX)*180./np.pi  # In degrees
+        angle = np.arctan2(dY, dX)*180./np.pi  # In degrees
 
         # Binning and extracting biggest rotation angle
         hist, bin_edges = np.histogram(angle, range=(-180, 180), bins=bins, weights=magnitude)
