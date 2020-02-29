@@ -22,25 +22,7 @@ class CBIR(object):
 
         # private:
         self._current_index = 0
-        self._database = None
         return
-
-    @property
-    def database(self):
-        if self._database is None:
-            # calculated index
-            times = []
-            total = len(self.dataset.all_images)
-            for i, image_path in enumerate(self.dataset.all_images):
-                start = time.time()
-                self.encode(self.dataset.get_image_id(image_path))
-                times.append(time.time() - start)
-                avg = np.mean(times)
-                eta = avg * total - avg * (i + 1)
-                print("Encoding %d/%d image %s - ETA: %2fs" % (i + 1, total, image_path, eta), end="\r")
-            self._database = np.array(list(self.indexed.values()))
-
-        return self._database
 
     def extract_features(self, image=None):
         if (image is not None):
@@ -267,8 +249,8 @@ class CBIR(object):
         # load indexed vectors from hdf5
         try:
             with open("data/index.pickle", "rb") as f:
-                self.indexed = pickle.load(f)
-                calculate = self.database  # this call sets forces the calculation of the matrix
+                indexed = pickle.load(f)
+                self.indexed = indexed
         except:
             print("Cannot load index file from data/index.pickle")
         return True
