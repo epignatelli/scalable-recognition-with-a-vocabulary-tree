@@ -6,21 +6,20 @@ dependencies:
   - future
   - h5py
   - jupyter
+  - anaconda::jupyterlab
+  - matplotlib
   - networkx
   - numpy
   - pandas
   - pip
   - pygraphviz
-  - pytorch:pytorch=1.2
-  - pytorch:torchvision
-  - pytorch:tensorboard
-  - pymongo
+  - pytorch::pytorch
+  - pytorch::torchvision
   - requests
   - scipy
   - scikit-learn
   - tqdm
   - pip:
-    - seaborn
-    - kornia
+    - opencv-python
 prefix: ~/anaconda3/envs/sberbank
 

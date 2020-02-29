@@ -92,7 +92,7 @@ class Descriptor(object):
         dX = cv2.Sobel(blur, cv2.CV_32F, 1, 0, (3, 3))
         dY = cv2.Sobel(blur, cv2.CV_32F, 0, 1, (3, 3))
         magnitude = np.sqrt(dX**2 + dY**2)
-        angle = 0*np.arctan2(dY, dX)*180./np.pi  # In degrees
+        angle = np.arctan2(dY, dX)*180./np.pi  # In degrees
 
         # Binning and extracting biggest rotation angle
         hist, bin_edges = np.histogram(angle, range=(-180, 180), bins=bins, weights=magnitude)
@@ -132,8 +132,11 @@ class Descriptor(object):
         Computes the SIFT descriptor on the given path.
         Note that we implement vlfeat version of sift
         """
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        keypoints, blobs = self.find_keypoints(image)
+        patches = self.extract_patches(gray, blobs)
         with torch.no_grad():
-            return self.sift(torch.as_tensor(patch, dtype=torch.float32).expand(1, 1, *patch.shape))[0].numpy()
+            return self.sift(torch.as_tensor(patches, dtype=torch.float32).unsqueeze(1)).squeeze().cpu().numpy()
 
     @staticmethod
     def show_mser(img, blobs, bounding_boxes=None, ellipses=None):

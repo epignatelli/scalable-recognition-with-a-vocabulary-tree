@@ -1,27 +1,27 @@
-name: sberbank
+name: sberbank_test
 channels:
   - pytorch
   - defaults
+  - alubbock
 dependencies:
   - future
   - h5py
   - jupyter
+  - anaconda::jupyterlab
+  - matplotlib
   - networkx
   - numpy
   - pandas
   - pip
-  - pygraphviz
-  - pytorch:pytorch=1.2
-  - pytorch:cudatoolkit=9.2
-  - pytorch:torchvision
-  - pytorch:tensorboard
-  - pymongo
+  - alubbock::graphviz
+  - alubbock::pygraphviz
+  - pytorch::pytorch
+  - pytorch::torchvision
   - requests
   - scipy
   - scikit-learn
   - tqdm
   - pip:
-    - seaborn
-    - kornia
+    - opencv-python
 prefix: ~/anaconda3/envs/sberbank
 
