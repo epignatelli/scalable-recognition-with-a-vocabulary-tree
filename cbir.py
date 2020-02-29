@@ -1,20 +1,20 @@
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 import networkx as nx
 import matplotlib.pyplot as plt
 from dataset import Dataset
 import time
 import warnings
+import multiprocessing
 
 
 class CBIR(object):
-    def __init__(self, root, n_branches, depth, sift_implementation="pytorch"):
+    def __init__(self, root, n_branches, depth, sift_implementation="pytorch", initialise=False):
         self.dataset = Dataset(root, sift_implementation=sift_implementation)
         self.n_branches = n_branches
         self.depth = depth
         self.tree = {}
         self.nodes = {}
-        self.indexed = []
 
         # private:
         self._current_index = 0
@@ -22,15 +22,12 @@ class CBIR(object):
         # init graph
         self.graph = nx.DiGraph()
 
-        # build the tree
-        warnings.filterwarnings("ignore")
-        self.fit()
-        # self.draw()
-        # plt.show()
-        warnings.filterwarnings("default")
+        if initialise:
+            # build the tree
+            self.fit()
 
-        # compute inverted index
-        self.index()
+            # compute inverted index
+            self.index()
         return
 
     def extract_features(self, image=None):
@@ -76,7 +73,9 @@ class CBIR(object):
             return
 
         # group features by cluster
-        model = KMeans(n_clusters=self.n_branches)
+        print("Computing clusters %d/%d with %d features from node %d at level %d\t\t" %
+              (self._current_index, self.n_branches ** self.depth, len(features), node, current_depth), end="\r")
+        model = MiniBatchKMeans(n_clusters=self.n_branches)
         model.fit(features)
         children = [[] for i in range(self.n_branches)]
         for i in range(len(features)):
@@ -92,24 +91,40 @@ class CBIR(object):
                      model.cluster_centers_[i], current_depth + 1)
         return
 
-    def index(self):
+    def index(self, parallel=True):
         """
         Generates the inverted index structure using tf-idf.
         This function also calculates the weights for each node as entropy.
         """
         # create inverted index
-        print("Generating index")
-        for image_path in self.dataset.all_images:
-            self.propagate(image_path)
+        print("\nGenerating index")
+        if parallel:
+            pool = multiprocessing.Pool()
+        times = []
+        total = len(self.dataset.all_images)
+        done = 0
+        for i, image_path in enumerate(self.dataset.all_images):
+            start = time.time()
+            if parallel:
+                pool.apply_async(self.propagate, (image_path,))
+            else:
+                self.propagate(image_path)
+            times.append(time.time() - start)
+            avg = np.mean(times)
+            eta = avg * total - avg * (i + 1)
+            done += 1
+            print("Indexing image %d/%d:  %s - ETA: %2fs" %
+                  (done + 1, total, image_path, eta), end="\r")
 
         # set weights of node based on entropy
+        print("\nCalculating weights")
         N = len(self.dataset)
         for node_id, files in self.graph.nodes(data=True):
             N_i = len(files)
             if N_i:  # if the node is visited, calculate the weight, otherwise, leave it as initialised
                 self.graph.nodes[node_id]["w"] = np.log(
                     N / N_i)  # calculate entropy
-        print("\nInverted index generated")
+        print("Inverted index generated")
         return
 
     def propagate(self, image_path):
@@ -121,7 +136,6 @@ class CBIR(object):
         Args:
             image_path (str): path of the image to encode
         """
-        print("Indexing %s" % image_path, end="\r")
         features = self.extract_features(image_path)
         image_id = self.dataset.get_image_id(image_path)
         for feature in features:
@@ -133,7 +147,6 @@ class CBIR(object):
                     self.graph.nodes[node][image_id] = 1
                 else:
                     self.graph.nodes[node][image_id] += 1
-        self.indexed.append(image_id)
         return
 
     def propagate_feature(self, feature, node=0):
@@ -168,27 +181,28 @@ class CBIR(object):
 
         weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
         tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
-        tfidf_normalised = tfidf / np.linalg.norm(tfidf)  # l2 norm
-        return tfidf_normalised# * weights
 
-    def score(self, database_image_path, query_image_path):
+        tfidf_normalised = tfidf / np.linalg.norm(tfidf)  # l2 norm
+        return tfidf_normalised  # * weights
+
+    def score(self, first_image_path, second_image_path):
         """
         Measures the similatiries between the set of paths of the features of each image.
         """
-        db_id = self.dataset.get_image_id(database_image_path)
-        query_id = self.dataset.get_image_id(query_image_path)
-
-        # propagate the query down the tree
-        self.propagate(query_image_path)
-
         # get the vectors of the images
+        db_id = self.dataset.get_image_id(first_image_path)
+        query_id = self.dataset.get_image_id(second_image_path)
         d = self.encode(db_id, return_graph=False)
         q = self.encode(query_id, return_graph=False)
+
         # simplified scoring using the l2 norm
         score = 2 - 2 * np.sum(d * q)
         return score
 
     def retrieve(self, query_image_path, n=4):
+        # propagate the query down the tree
+        self.propagate(query_image_path)
+
         scores = {}
         for database_image_path in self.dataset.all_images:
             db_id = self.dataset.get_image_id(database_image_path)
@@ -203,14 +217,22 @@ class CBIR(object):
         ax[0].imshow(self.dataset.read_image(query_path))
         ax[0].set_title("Query image")
         img_ids = list(scores_dict.keys())
+        scores = list(scores_dict.values())
         for i in range(1, len(ax)):
             ax[i].axis("off")
             ax[i].imshow(self.dataset.read_image(f"C:\\Users\\epignatel\\Documents\\repos\\sberbank\\data\\jpg\\{img_ids[i - 1]}.jpg"))
-            ax[i].set_title("Retrieved image %d" % i)
+            ax[i].set_title("#%d. %s Score:%.3f" %
+                            (i, img_ids[i - 1], scores[i - 1]))
         return
 
-    def draw(self, figsize=None, node_color=None):
+    def draw(self, figsize=None, node_color=None, layout="tree"):
         figsize = (30, 10) if figsize is None else figsize
         plt.figure(figsize=figsize)
-        pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog='dot')
+        layout = layout.lower()
+        if "tree" in layout:
+            layout = "dot"
+        elif "radial" in layout:
+            layout = 'twopi'
+        pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog=layout)
         nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
+        return
