@@ -35,7 +35,10 @@ class Dataset():
         return len(self.all_images)
 
     def __getitem__(self, idx):
-        return self.all_images[idx]
+        if type(idx) is str:
+            return self.get_image_by_name(idx)
+        else:
+            return self.all_images[idx]
 
     def read_image(self, image_path, gray=False):
         if not (isfile(image_path)):
