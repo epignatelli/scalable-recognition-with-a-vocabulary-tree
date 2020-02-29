@@ -230,9 +230,10 @@ class CBIR(object):
         plt.figure(figsize=figsize)
         layout = layout.lower()
         if "tree" in layout:
-            layout = "dot"
+            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="dot")
         elif "radial" in layout:
-            layout = 'twopi'
-        pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog=layout)
+            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="twopi")
+        else:
+            pos = None
         nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
         return
