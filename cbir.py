@@ -60,7 +60,7 @@ class CBIR(object):
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
-    def fit(self, features=None, node=0, root=None, current_depth=0):
+    def fit(self, features, node=0, root=None, current_depth=0):
         """
         Generates a hierarchical vocabulary tree representation of some input features
         using hierarchical k-means clustering.
@@ -72,8 +72,6 @@ class CBIR(object):
             root (numpy.ndarray): the value of the parent of the `node` as a virtual feature
             current_depth (int): the depth of the node as the distance in jumps from the very root of the tree
         """
-        if features is None:
-            features = self.extract_features()
         if root is None:
             root = np.mean(features, axis=0)
 
@@ -245,8 +243,8 @@ class CBIR(object):
             pickle.dump(self.nodes, f)
 
         # store indexed vectors in hdf5
-        with h5py.File("data/index.hdf5", "w") as f:
-            f.create_dataset("index", data=self.database)
+        with open("data/index.pickle", "wb") as f:
+            pickle.dump(self.indexed, f)
 
         return True
 
@@ -268,11 +266,11 @@ class CBIR(object):
 
         # load indexed vectors from hdf5
         try:
-            with h5py.File("data/index.hdf5", "r") as f:
-                database = np.array(f["index"])
-                self._database = database
+            with open("data/index.pickle", "rb") as f:
+                self.indexed = pickle.load(f)
+                calculate = self.database  # this call sets forces the calculation of the matrix
         except:
-            print("Cannot load index file from data/index.hdf5")
+            print("Cannot load index file from data/index.pickle")
         return True
 
     def show_results(self, query_path, scores_dict, n=4):
