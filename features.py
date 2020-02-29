@@ -61,23 +61,14 @@ class Descriptor(object):
         patches = []
         for rect in poligons:
             # Evaluates patch orientation
-            scale_factor = 3
-            rect_bigger = (rect[0],
-                           (scale_factor * rect[1][0], scale_factor * rect[1][1]),
-                           rect[2])
-            big_patch = self.crop_rectangle(
-                img, rect_bigger, (self.patch_size[0]*scale_factor, self.patch_size[1]*scale_factor))
-            if big_patch is None:
-                continue 
-            patch_angle = self.find_image_orientation(big_patch, int(self.patch_size[0]*1.5))
-
-            # Extract the patch from the bigger patch after rotating it
-            scale_factor = 1.5
+            scale_factor = 1
             rect_bigger = (rect[0],
                            (scale_factor * rect[1][0], scale_factor * rect[1][1]),
                            rect[2])
             feat_patch = self.crop_rectangle(
-                img, rect_bigger, (int(self.patch_size[0]*scale_factor), int(self.patch_size[1]*scale_factor)))            
+                img, rect_bigger, (self.patch_size[0]*scale_factor, self.patch_size[1]*scale_factor))
+            if feat_patch is None:
+                continue
             patches.append(feat_patch)
         return patches
 
@@ -127,14 +118,18 @@ class Descriptor(object):
                            interpolation=cv2.INTER_LANCZOS4)
         return patch
 
-    def describe(self, patch):
+    def describe(self, image):
         """
         Computes the SIFT descriptor on the given path.
         Note that we implement vlfeat version of sift
         """
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         keypoints, blobs = self.find_keypoints(image)
-        patches = self.extract_patches(gray, blobs)
+        rectangles = self.fit_bounding_box_to_mser(blobs)
+        patches = self.extract_patches(gray, rectangles)
+        return self.extract_features(patches)
+
+    def extract_features(self, patches):
         with torch.no_grad():
             return self.sift(torch.as_tensor(patches, dtype=torch.float32).unsqueeze(1)).squeeze().cpu().numpy()
 
