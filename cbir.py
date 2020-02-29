@@ -6,6 +6,8 @@ from dataset import Dataset
 import time
 import warnings
 import multiprocessing
+import h5py
+import pickle
 
 
 class CBIR(object):
@@ -15,9 +17,11 @@ class CBIR(object):
         self.depth = depth
         self.tree = {}
         self.nodes = {}
+        self.indexed = {}
 
         # private:
         self._current_index = 0
+        self._database = None
 
         # init graph
         self.graph = nx.DiGraph()
@@ -29,6 +33,23 @@ class CBIR(object):
             # compute inverted index
             self.index()
         return
+
+    @property
+    def database(self):
+        if self._database is None:
+            # calculated index
+            times = []
+            total = len(self.dataset.all_images)
+            for i, image_path in enumerate(self.dataset.all_images):
+                start = time.time()
+                self.encode(self.dataset.get_image_id(image_path))
+                times.append(time.time() - start)
+                avg = np.mean(times)
+                eta = avg * total - avg * (i + 1)
+                print("Encoding %d/%d image %s - ETA: %2fs" % (i + 1, total, image_path, eta), end="\r")
+            self._database = np.array(list(self.indexed.values()))
+
+        return self._database
 
     def extract_features(self, image=None):
         if (image is not None):
@@ -63,7 +84,7 @@ class CBIR(object):
         if features is None:
             features = self.extract_features()
         if root is None:
-            root = np.mean(features)
+            root = np.mean(features, axis=0)
 
         self.nodes[node] = root
         self.graph.add_node(node)
@@ -91,7 +112,7 @@ class CBIR(object):
                      model.cluster_centers_[i], current_depth + 1)
         return
 
-    def index(self, parallel=True):
+    def index(self, parallel=False):
         """
         Generates the inverted index structure using tf-idf.
         This function also calculates the weights for each node as entropy.
@@ -107,8 +128,10 @@ class CBIR(object):
             start = time.time()
             if parallel:
                 pool.apply_async(self.propagate, (image_path,))
+                pool.apply_async(self.encode, self.dataset.get_image_id(image_path))
             else:
                 self.propagate(image_path)
+                self.encode(self.dataset.get_image_id(image_path))
             times.append(time.time() - start)
             avg = np.mean(times)
             eta = avg * total - avg * (i + 1)
@@ -169,7 +192,7 @@ class CBIR(object):
                 path.append(child)
         return path
 
-    def encode(self, image_id, return_graph=True):
+    def encode(self, image_id, return_graph=False):
         if return_graph:
             subgraph = self.graph.subgraph(
                 [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
@@ -179,11 +202,22 @@ class CBIR(object):
             self.draw(node_color=colours)
             return subgraph
 
-        weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
-        tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
+        # if the imaged is already indexed, return
+        if self.is_encoded(image_id):
+            return self.indexed[image_id]
 
+        # otherwise calculate it
+        # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
+        tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
         tfidf_normalised = tfidf / np.linalg.norm(tfidf, ord=1)  # l1 norm
+
+        # store the encoded representation
+        self.indexed[image_id] = tfidf_normalised
+
         return tfidf_normalised  # * weights
+
+    def is_encoded(self, image_id):
+        return image_id in self.indexed
 
     def score(self, first_image_path, second_image_path):
         """
@@ -196,7 +230,7 @@ class CBIR(object):
         q = self.encode(query_id, return_graph=False)
 
         # simplified scoring using the l2 norm
-        score = 2 - 2 * np.sum(d * q)
+        score = np.linalg.norm(d - q, ord=1)
         return score
 
     def retrieve(self, query_image_path, n=4):
@@ -210,6 +244,45 @@ class CBIR(object):
         sorted_scores = {k: v for k, v in sorted(
             scores.items(), key=lambda item: item[1])}
         return sorted_scores
+
+    def store(self):
+        # store graph
+        nx.write_gpickle(self.graph, "data/graph.pickle")
+
+        # store nodes with features
+        with open("data/nodes.pickle", "wb") as f:
+            pickle.dump(self.nodes, f)
+
+        # store indexed vectors in hdf5
+        with h5py.File("data/index.hdf5", "w") as f:
+            f.create_dataset("index", data=self.database)
+
+        return True
+
+    def load(self):
+        # load graph
+        try:
+            graph = nx.read_gpickle("data/graph.pickle")
+            self.graph = graph
+        except:
+            print("Cannot read graph file at data/graph.pickle")
+
+        # load nodes with features
+        try:
+            with open("data/nodes.pickle", "rb") as f:
+                nodes = pickle.load(f)
+                self.nodes = nodes
+        except:
+            print("Cannote read nodes file at data/nodes.pickle")
+
+        # load indexed vectors from hdf5
+        try:
+            with h5py.File("data/index.hdf5", "r") as f:
+                database = np.array(f["index"])
+                self._database = database
+        except:
+            print("Cannot load index file from data/index.hdf5")
+        return True
 
     def show_results(self, query_path, scores_dict, n=4):
         fig, ax = plt.subplots(1, n + 1, figsize=(20, 10))
