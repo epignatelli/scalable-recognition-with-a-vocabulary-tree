@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 import networkx as nx
@@ -17,7 +18,7 @@ class CBIR(object):
         self.depth = depth
         self.tree = {}
         self.nodes = {}
-        self.indexed = {}
+        self.index = {}
         self.graph = nx.DiGraph()
 
         # private:
@@ -83,26 +84,20 @@ class CBIR(object):
                      model.cluster_centers_[i], current_depth + 1)
         return
 
-    def index(self, parallel=False):
+    def tfidf(self):
         """
         Generates the inverted index structure using tf-idf.
         This function also calculates the weights for each node as entropy.
         """
         # create inverted index
         print("\nGenerating index")
-        if parallel:
-            pool = multiprocessing.Pool()
         times = []
         total = len(self.dataset.all_images)
         done = 0
         for i, image_path in enumerate(self.dataset.all_images):
             start = time.time()
-            if parallel:
-                pool.apply_async(self.propagate, (image_path,))
-                pool.apply_async(self.encode, self.dataset.get_image_id(image_path))
-            else:
-                self.propagate(image_path)
-                self.encode(self.dataset.get_image_id(image_path))
+            self.propagate(image_path)
+            self.encode(self.dataset.get_image_id(image_path))
             times.append(time.time() - start)
             avg = np.mean(times)
             eta = avg * total - avg * (i + 1)
@@ -154,13 +149,15 @@ class CBIR(object):
         path = [node]
         while self.graph.out_degree(node):  # recur, stop if leaf
             min_dist = float("inf")
+            closest = None
             for child in self.graph[node]:
                 distance = np.linalg.norm(
                     [self.nodes[child] - feature])  # l1 norm
                 if distance < min_dist:
                     min_dist = distance
-                    node = child
-                path.append(child)
+                    closest = child
+            path.append(closest)
+            node = closest
         return path
 
     def encode(self, image_id, return_graph=False):
@@ -175,7 +172,7 @@ class CBIR(object):
 
         # if the imaged is already indexed, return
         if self.is_encoded(image_id):
-            return self.indexed[image_id]
+            return self.index[image_id]
 
         # otherwise calculate it
         # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
@@ -183,12 +180,14 @@ class CBIR(object):
         tfidf_normalised = tfidf / np.linalg.norm(tfidf, ord=1)  # l1 norm
 
         # store the encoded representation
-        self.indexed[image_id] = tfidf_normalised
+        # print(tfidf_normalised)
+        tfidf_normalised = tfidf_normalised if not np.isnan(tfidf_normalised).any() else 0
+        self.index[image_id] = tfidf_normalised
 
         return tfidf_normalised  # * weights
 
     def is_encoded(self, image_id):
-        return image_id in self.indexed
+        return image_id in self.index
 
     def score(self, first_image_path, second_image_path):
         """
@@ -202,7 +201,7 @@ class CBIR(object):
 
         # simplified scoring using the l2 norm
         score = np.linalg.norm(d - q, ord=1)
-        return score
+        return score if not np.isnan(score) else 1e6
 
     def retrieve(self, query_image_path, n=4):
         # propagate the query down the tree
@@ -216,43 +215,49 @@ class CBIR(object):
             scores.items(), key=lambda item: item[1])}
         return sorted_scores
 
-    def store(self):
+    def store(self, path=None):
+        if path is None:
+            path = "data"
+
         # store graph
-        nx.write_gpickle(self.graph, "data/graph.pickle")
+        nx.write_gpickle(self.graph, os.path.join(path, "graph.pickle"))
 
         # store nodes with features
-        with open("data/nodes.pickle", "wb") as f:
+        with open(os.path.join(path, "nodes.pickle"), "wb") as f:
             pickle.dump(self.nodes, f)
 
         # store indexed vectors in hdf5
-        with open("data/index.pickle", "wb") as f:
-            pickle.dump(self.indexed, f)
+        with open(os.path.join(path, "index.pickle"), "wb") as f:
+            pickle.dump(self.index, f)
 
         return True
 
-    def load(self):
+    def load(self, path=None):
+        if path is None:
+            path = "data"
+
         # load graph
         try:
-            graph = nx.read_gpickle("data/graph.pickle")
+            graph = nx.read_gpickle(os.path.join(path, "graph.pickle"))
             self.graph = graph
         except:
-            print("Cannot read graph file at data/graph.pickle")
+            print("Cannot read graph file at %s/graph.pickle" % path)
 
         # load nodes with features
         try:
-            with open("data/nodes.pickle", "rb") as f:
+            with open(os.path.join(path, "nodes.pickle"), "rb") as f:
                 nodes = pickle.load(f)
                 self.nodes = nodes
         except:
-            print("Cannote read nodes file at data/nodes.pickle")
+            print("Cannote read nodes file at %s/nodes.pickle" % path)
 
         # load indexed vectors from hdf5
         try:
-            with open("data/index.pickle", "rb") as f:
+            with open(os.path.join(path, "index.pickle"), "rb") as f:
                 indexed = pickle.load(f)
-                self.indexed = indexed
+                self.index = indexed
         except:
-            print("Cannot load index file from data/index.pickle")
+            print("Cannot load index file from %s/index.pickle" % path)
         return True
 
     def show_results(self, query_path, scores_dict, n=4):
@@ -269,9 +274,9 @@ class CBIR(object):
                             (i, img_ids[i - 1], scores[i - 1]))
         return
 
-    def draw(self, figsize=None, node_color=None, layout="tree"):
+    def draw(self, figsize=None, node_color=None, layout="tree", labels=None):
         figsize = (30, 10) if figsize is None else figsize
-        plt.figure(figsize=figsize)
+        fig = plt.figure(figsize=figsize)
         layout = layout.lower()
         if "tree" in layout:
             pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="dot")
@@ -279,5 +284,8 @@ class CBIR(object):
             pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="twopi")
         else:
             pos = None
-        nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
-        return
+        if labels is None:
+            nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
+        else:
+            nx.draw(self.graph, pos=pos, labels=labels, node_color=node_color)
+        return fig
