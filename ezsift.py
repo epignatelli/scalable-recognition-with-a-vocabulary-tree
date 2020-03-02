@@ -11,6 +11,10 @@ import warnings
 
 class EzSIFT():
     def __init__(self):
+        if os.name == "nt":
+            self.program = "./ezsift_win"
+        elif os.name == "posix":
+            self.program = "./ezsift_unix"
         return
 
     def __call__(self, img):
@@ -29,7 +33,7 @@ class EzSIFT():
         cv2.imwrite('data/do_no_delete_me.pgm', img)
         cv2.imwrite('data/do_no_delete_me.jpg', img)
 
-        p = subprocess.Popen(['./ezsift', 'data/do_no_delete_me.pgm'], stdout=subprocess.PIPE,
+        p = subprocess.Popen([self.program, 'data/do_no_delete_me.pgm'], stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         p.communicate()
 
