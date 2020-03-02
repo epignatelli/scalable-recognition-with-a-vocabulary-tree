@@ -184,10 +184,11 @@ class CBIR(object):
         else:
             # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
             embedding = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
-            embedding = embedding / np.linalg.norm(embedding, ord=1)  # l1 norm
+
+        # normalise the embeddings
+        embedding = embedding / np.linalg.norm(embedding, ord=1)  # l1 norm
 
         # store the encoded representation
-        # print(embedding)
         embedding = embedding if not np.isnan(embedding).any() else 0
         self.index[image_id] = embedding
 
