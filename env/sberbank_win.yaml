@@ -1,0 +1,27 @@
+name: sberbank_test
+channels:
+  - pytorch
+  - defaults
+  - alubbock
+dependencies:
+  - future
+  - h5py
+  - jupyter
+  - anaconda::jupyterlab
+  - matplotlib
+  - networkx
+  - numpy
+  - pandas
+  - pip
+  - alubbock::graphviz
+  - alubbock::pygraphviz
+  - pytorch::pytorch
+  - pytorch::torchvision
+  - requests
+  - scipy
+  - scikit-learn
+  - tqdm
+  - pip:
+    - opencv-python
+prefix: ~/anaconda3/envs/sberbank
+
