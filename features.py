@@ -67,25 +67,6 @@ class Descriptor(object):
         return patches
 
     @staticmethod
-    def find_image_orientation(img, sigma, bins=36):
-        """Follows https://aishack.in/tutorials/sift-scale-invariant-feature-transform-keypoint-orientation/
-
-        The gradients are blurred with a sigma equal to the windows size for SIFT, that is self.patch_size
-        """
-        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        blur = cv2.GaussianBlur(gray, (sigma, sigma), 0)
-        dX = cv2.Sobel(blur, cv2.CV_32F, 1, 0, (3, 3))
-        dY = cv2.Sobel(blur, cv2.CV_32F, 0, 1, (3, 3))
-        magnitude = np.sqrt(dX**2 + dY**2)
-        angle = np.arctan2(dY, dX)*180./np.pi  # In degrees
-
-        # Binning and extracting biggest rotation angle
-        hist, bin_edges = np.histogram(angle, range=(-180, 180), bins=bins, weights=magnitude)
-        max_hist_index = np.argmax(hist)
-        angle = (bin_edges[max_hist_index] + bin_edges[max_hist_index+1])/2
-        return angle
-
-    @staticmethod
     def crop_rectangle(img, rect, patch_size):
         # rotate img
         angle = rect[2]
