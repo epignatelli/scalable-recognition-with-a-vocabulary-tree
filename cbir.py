@@ -125,6 +125,9 @@ class CBIR(object):
         Args:
             image_path (str): path of the image to encode
         """
+        if self.dataset.sift_implementation == "alexnet":
+            return
+
         features = self.extract_features(image_path)
         image_id = self.dataset.get_image_id(image_path)
         for feature in features:
@@ -175,16 +178,20 @@ class CBIR(object):
             return self.index[image_id]
 
         # otherwise calculate it
-        # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
-        tfidf = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
-        tfidf_normalised = tfidf / np.linalg.norm(tfidf, ord=1)  # l1 norm
+        if self.dataset.sift_implementation.lower() == "alexnet":
+            image = self.dataset.get_image_by_name(image_id + ".jpg")
+            embedding = self.dataset.alexnet.encode(image)
+        else:
+            # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
+            embedding = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
+            embedding = embedding / np.linalg.norm(embedding, ord=1)  # l1 norm
 
         # store the encoded representation
-        # print(tfidf_normalised)
-        tfidf_normalised = tfidf_normalised if not np.isnan(tfidf_normalised).any() else 0
-        self.index[image_id] = tfidf_normalised
+        # print(embedding)
+        embedding = embedding if not np.isnan(embedding).any() else 0
+        self.index[image_id] = embedding
 
-        return tfidf_normalised  # * weights
+        return embedding  # * weights
 
     def is_encoded(self, image_id):
         return image_id in self.index
@@ -194,6 +201,7 @@ class CBIR(object):
         Measures the similatiries between the set of paths of the features of each image.
         """
         # get the vectors of the images
+
         db_id = self.dataset.get_image_id(first_image_path)
         query_id = self.dataset.get_image_id(second_image_path)
         d = self.encode(db_id, return_graph=False)
@@ -260,8 +268,8 @@ class CBIR(object):
             print("Cannot load index file from %s/index.pickle" % path)
         return True
 
-    def show_results(self, query_path, scores_dict, n=4):
-        fig, ax = plt.subplots(1, n + 1, figsize=(20, 10))
+    def show_results(self, query_path, scores_dict, n=4, figsize=(10, 4)):
+        fig, ax = plt.subplots(1, n + 1, figsize=figsize)
         ax[0].axis("off")
         ax[0].imshow(self.dataset.read_image(query_path))
         ax[0].set_title("Query image")
@@ -269,7 +277,7 @@ class CBIR(object):
         scores = list(scores_dict.values())
         for i in range(1, len(ax)):
             ax[i].axis("off")
-            ax[i].imshow(self.dataset.read_image(f"C:\\Users\\epignatel\\Documents\\repos\\sberbank\\data\\jpg\\{img_ids[i - 1]}.jpg"))
+            ax[i].imshow(self.dataset.get_image_by_name(f"{img_ids[i - 1]}.jpg"))
             ax[i].set_title("#%d. %s Score:%.3f" %
                             (i, img_ids[i - 1], scores[i - 1]))
         return

@@ -8,6 +8,7 @@ import h5py
 import matplotlib.pyplot as plt
 from features import Descriptor
 from ezsift import EzSIFT
+from alexnet import AlexNet
 
 
 class Dataset():
@@ -19,6 +20,9 @@ class Dataset():
             self.descriptor = EzSIFT()
         else:
             self.descriptor = Descriptor()
+
+        if sift_implementation == "alexnet":
+            self.alexnet = AlexNet()
 
     def __str__(self):
         images = []
@@ -43,6 +47,10 @@ class Dataset():
     def read_image(self, image_path, gray=False):
         if not (isfile(image_path)):
             image_path = os.path.abspath(join(self.path, image_path))
+
+        if not (isfile(image_path)):
+            raise FileNotFoundError(image_path)
+
         image = cv2.imread(image_path)
         image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
         if gray:
