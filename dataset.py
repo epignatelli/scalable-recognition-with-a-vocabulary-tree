@@ -18,10 +18,12 @@ class Dataset():
         self.sift_implementation = sift_implementation
         if sift_implementation.lower() == "ezsift":
             self.descriptor = EzSIFT()
+        elif sift_implementation.lower() == "alexnet_descriptor":
+            self.descriptor = AlexNet()
         else:
             self.descriptor = Descriptor()
 
-        if sift_implementation == "alexnet":
+        if sift_implementation == "alexnet_encoder":
             self.alexnet = AlexNet()
 
     def __str__(self):
@@ -44,7 +46,7 @@ class Dataset():
         else:
             return self.all_images[idx]
 
-    def read_image(self, image_path, gray=False):
+    def read_image(self, image_path):
         if not (isfile(image_path)):
             image_path = os.path.abspath(join(self.path, image_path))
 
@@ -53,11 +55,7 @@ class Dataset():
 
         image = cv2.imread(image_path)
         image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
-        if gray:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            return np.float32(gray)
-        else:
-            return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     def get_image_by_name(self, image_name=None):
         return self.read_image(image_name)
@@ -85,7 +83,7 @@ class Dataset():
             return features # / np.linalg.norm(features)
 
         # if not, calculate the feature
-        image = self.read_image(image_path, gray=False)
+        image = self.read_image(image_path)
         features = self.descriptor.describe(image)
 
         # once, calculated, store the features if they're not on disk

@@ -42,7 +42,7 @@ class Descriptor(object):
             poligons.append(poligon_fit(blob))
         return poligons
 
-    def extract_patches(self, img, poligons, square=True):
+    def extract_patches(self, img, keypoints):
         """Extracts the patches associated to the keypoints of the MSER
         descriptors.
 
@@ -55,16 +55,21 @@ class Descriptor(object):
             [np.array] -- List of patches
         """
         patches = []
-        for rect in poligons:
-            # Evaluates patch orientation
-            scale_factor = 1
-            rect_bigger = (rect[0],
-                           (scale_factor * rect[1][0], scale_factor * rect[1][1]),
-                           rect[2])
-            feat_patch = self.crop_rectangle(
-                img, rect_bigger, (self.patch_size[0]*scale_factor, self.patch_size[1]*scale_factor))
-            if feat_patch is None:
-                continue
+        height,width,_ = img.shape
+        for kp in keypoints:
+            mask = np.zeros((height,width), np.uint8)
+
+            pt = (int(kp.pt[0]), int(kp.pt[1]))
+
+            cv2.circle(mask,pt,int(kp.size),(255,255,255),thickness=-1)
+
+            masked_data = cv2.bitwise_and(img, img, mask=mask)
+
+            _,thresh = cv2.threshold(mask,1,255,cv2.THRESH_BINARY)
+            contours = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+            x,y,w,h = cv2.boundingRect(contours[0])
+            feat_patch = masked_data[y:y+h,x:x+w]
+            
             patches.append(feat_patch)
         return patches
 
@@ -101,8 +106,7 @@ class Descriptor(object):
         Note that we implement vlfeat version of sift
         """
         # find the keypoints and descriptors with ORB (like SIFT)
-        orb = cv2.ORB.create()
-        kp, desc = orb.detectAndCompute(image,None)
+        kp, desc = self.orb.detectAndCompute(image,None)
         desc = np.array(desc, dtype=np.float32)
         if desc.size <= 1:
             desc = np.zeros((1,32))
