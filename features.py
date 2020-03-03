@@ -22,6 +22,8 @@ class Descriptor(object):
                                     _min_area=mser_min_area,
                                     _max_area=mser_max_area)
 
+        self.orb = cv2.ORB.create()
+
     def find_keypoints(self, image):
         # Getting the mser regions for drawing Bounding-Box
         blobs, bboxes = self.mser.detectRegions(image)
@@ -98,6 +100,15 @@ class Descriptor(object):
         Computes the SIFT descriptor on the given path.
         Note that we implement vlfeat version of sift
         """
+        # find the keypoints and descriptors with ORB (like SIFT)
+        orb = cv2.ORB.create()
+        kp, desc = orb.detectAndCompute(image,None)
+        desc = np.array(desc, dtype=np.float32)
+        if desc.size <= 1:
+            desc = np.zeros((1,32))
+            print(desc.shape)
+        return desc
+
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         blobs = self.find_keypoints(image)
         rectangles = self.fit_bounding_box_to_mser(blobs)

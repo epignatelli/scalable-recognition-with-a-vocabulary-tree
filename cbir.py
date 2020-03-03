@@ -186,7 +186,7 @@ class CBIR(object):
             embedding = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
 
         # normalise the embeddings
-        embedding = embedding / np.linalg.norm(embedding, ord=1)  # l1 norm
+        embedding = embedding / np.linalg.norm(embedding, ord=2)  # l2 norm
 
         # store the encoded representation
         embedding = embedding if not np.isnan(embedding).any() else 0
@@ -207,9 +207,10 @@ class CBIR(object):
         query_id = self.dataset.get_image_id(second_image_path)
         d = self.encode(db_id, return_graph=False)
         q = self.encode(query_id, return_graph=False)
-
+        d = d / np.linalg.norm(d)
+        q = q / np.linalg.norm(q)
         # simplified scoring using the l2 norm
-        score = np.linalg.norm(d - q, ord=1)
+        score = np.linalg.norm(d - q, ord=2)
         return score if not np.isnan(score) else 1e6
 
     def retrieve(self, query_image_path, n=4):
@@ -278,9 +279,9 @@ class CBIR(object):
         scores = list(scores_dict.values())
         for i in range(1, len(ax)):
             ax[i].axis("off")
-            ax[i].imshow(self.dataset.get_image_by_name(f"{img_ids[i - 1]}.jpg"))
+            ax[i].imshow(self.dataset.get_image_by_name(f"{img_ids[i]}.jpg"))
             ax[i].set_title("#%d. %s Score:%.3f" %
-                            (i, img_ids[i - 1], scores[i - 1]))
+                            (i, img_ids[i], scores[i]))
         return
 
     def draw(self, figsize=None, node_color=None, layout="tree", labels=None):
