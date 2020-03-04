@@ -70,7 +70,7 @@ class Descriptor(object):
         return desc
 
     @staticmethod
-    def show_random_descriptors(img, patches, descriptors, N=5):
+    def show_random_descriptors(img, keypoints, patches, descriptors, N=5):
         """
         Shows N descriptors with the corresponding patches, taken at random.
         
@@ -90,8 +90,9 @@ class Descriptor(object):
         gs = GridSpec(N, 8, figure=fig)
 
         ax1 = fig.add_subplot(gs[:, :-2])
+        img2 = cv2.drawKeypoints(img, keypoints, None, color=(0,255,0), flags=4)
         ax1.set_title("Image")
-        plt.imshow(img)
+        plt.imshow(img2)
         plt.axis('off')
 
         # Showing the patched with their desctiptors
