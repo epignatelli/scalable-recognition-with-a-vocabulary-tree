@@ -1,6 +1,5 @@
 import torch
 import torchvision
-import numpy as np
 
 
 class AlexNet(object):
