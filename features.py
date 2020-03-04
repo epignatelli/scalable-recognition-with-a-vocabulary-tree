@@ -4,16 +4,11 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.gridspec import GridSpec
-from pytorch_sift.pytorch_sift import SIFTNet
 
 
 class Descriptor(object):
     def __init__(self, patch_size=65):
-        # this sets self.describe to the SIFTNet callable
         self.patch_size = (int(patch_size), int(patch_size))
-        self.sift = SIFTNet(patch_size=patch_size,
-                            sigma_type="vlfeat", mask_type='Gauss')
-
         self.orb = cv2.ORB.create(1500, nlevels=32)
 
     def extract_patches(self, img, keypoints):

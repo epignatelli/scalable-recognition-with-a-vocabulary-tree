@@ -12,21 +12,21 @@ conda env create -f env\sberbank_win.yaml
 conda env create -f env\sberbank_unix.yaml
 ```
 
-#### 2. Download the data
-```
-python download.py
-```
-
-#### 3. Download additional packages
-
-https://imperialcollegelondon.box.com/s/tn3kzzxhituz53nf9p5g4mv53wcgmwls
-
-
-#### 4. Start jupyter and open the notebook
+#### 2. Start jupyter and open the notebook
 ```
 conda activate sberbank
 jupyter-notebook
 ```
+
+#### 3. Open a terminal from jupyter and type
+```
+python download.py
+```
+
+#### 4. Go to this link and download the content into your local `data` folder
+
+https://imperialcollegelondon.box.com/s/v0qqkuii1pqbbzofy7957iip08o596er
+
 
 
 ## Literature

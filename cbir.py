@@ -12,7 +12,7 @@ import pickle
 
 
 class CBIR(object):
-    def __init__(self, root, n_branches, depth, sift_implementation="pytorch"):
+    def __init__(self, root, n_branches, depth, sift_implementation="orb"):
         self.dataset = Dataset(root, sift_implementation=sift_implementation)
         self.n_branches = n_branches
         self.depth = depth
