@@ -125,7 +125,7 @@ class Dataset():
             with h5py.File(hdf5_path, "r") as file:
                 image_id = self.get_image_id(image_path)
                 features = np.array(file[image_id])
-            return features # / np.linalg.norm(features)
+            return features  # / np.linalg.norm(features)
 
         # if not, calculate the feature
         image = self.read_image(image_path)

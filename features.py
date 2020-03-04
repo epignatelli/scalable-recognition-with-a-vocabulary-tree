@@ -20,11 +20,11 @@ class Descriptor(object):
         """Extracts the patches associated to the keypoints of a
         descriptors.
 
-        Arguments:
-            img {np.array} -- Image from which the patches are extracted
-            keypoints -- Keypoits relative to the regions to extract
+        Args:
+            img (np.array): Image from which the patches are extracted
+            keypoints (cv2.KeyPoint): Keypoints relative to the regions to extract
         Returns:
-            [np.array] -- List of patches
+            (np.array) -- List of patches
         """
         patches = []
         height, width, _ = img.shape
