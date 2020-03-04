@@ -72,7 +72,13 @@ class Descriptor(object):
     @staticmethod
     def show_random_descriptors(img, patches, descriptors, N=5):
         """
-        Shows N descriptors taken at random
+        Shows N descriptors with the corresponding patches, taken at random.
+        
+        Args:
+            img (np.array): Main image
+            patches (list): List of image patches
+            descriptors (list): List of descriptors
+            N (int, optional): Number of patches to show, default to 5
         """
         # Getting random keypoints
         random_idx = [random.randint(0, len(patches) - 1) for n in range(N)]
@@ -111,6 +117,12 @@ class Descriptor(object):
 
     @staticmethod
     def show_corners_on_image(img, corners):
+        """Shows the extracted corners on the image
+        
+        Args:
+            img (np.array): image array
+            corners (np.array): binary corner image
+        """
         img_3channels = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         img_3channels[corners] = [255, 0, 0]
         plt.imshow(img_3channels)
