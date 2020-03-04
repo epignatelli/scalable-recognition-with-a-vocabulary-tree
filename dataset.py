@@ -46,7 +46,7 @@ class Dataset():
         else:
             return self.all_images[idx]
 
-    def read_image(self, image_path):
+    def read_image(self, image_path, scale=1.):
         if not (isfile(image_path)):
             image_path = os.path.abspath(join(self.path, image_path))
 
@@ -54,7 +54,7 @@ class Dataset():
             raise FileNotFoundError(image_path)
 
         image = cv2.imread(image_path)
-        image = cv2.resize(image, (0, 0), fx=0.3, fy=0.3)
+        image = cv2.resize(image, (0, 0), fx=scale, fy=scale)
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     def get_image_by_name(self, image_name=None):

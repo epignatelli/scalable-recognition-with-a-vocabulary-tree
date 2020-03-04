@@ -16,13 +16,7 @@ class Descriptor(object):
         self.sift = SIFTNet(patch_size=patch_size,
                             sigma_type="vlfeat", mask_type='Gauss')
 
-        # Creating the detector and setting some properties
-        # see --> https://docs.opencv.org/3.4/d3/d28/classcv_1_1MSER.html
-        self.mser = cv2.MSER_create(_max_variation=0.5,
-                                    _min_area=mser_min_area,
-                                    _max_area=mser_max_area)
-
-        self.orb = cv2.ORB.create()
+        self.orb = cv2.ORB.create(1500, nlevels=32)
 
     def find_keypoints(self, image):
         # Getting the mser regions for drawing Bounding-Box
@@ -109,18 +103,11 @@ class Descriptor(object):
         Note that we implement vlfeat version of sift
         """
         # find the keypoints and descriptors with ORB (like SIFT)
-        kp, desc = self.orb.detectAndCompute(image,None)
+        kp, desc = self.orb.detectAndCompute(image, None)
         desc = np.array(desc, dtype=np.float32)
         if desc.size <= 1:
             desc = np.zeros((1,32))
-            print(desc.shape)
         return desc
-
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        blobs = self.find_keypoints(image)
-        rectangles = self.fit_bounding_box_to_mser(blobs)
-        patches = self.extract_patches(gray, rectangles)
-        return self.extract_features(patches)
 
     def extract_features(self, patches):
         with torch.no_grad():
