@@ -14,11 +14,11 @@ from alexnet import AlexNet
 class Dataset():
     def __init__(self, folder="data/jpg", sift_implementation="orb"):
         """Dataset initialization
-        
+
         Args:
-            folder (str, optional): Path of the folder where images are. Images 
+            folder (str, optional): Path of the folder where images are. Images
                 must be in jpg format
-            sift_implementation (str, optional): What kind of sift implementation 
+            sift_implementation (str, optional): What kind of sift implementation
                 to use.
         """
         self.path = folder
@@ -56,15 +56,15 @@ class Dataset():
 
     def read_image(self, image_path, scale=1.):
         """Reads an image from the image folder
-        
+
         Args:
             image_path (TYPE): Image path
             scale (float, optional): Scale factor for image resizing. Default is
                 1. which means no scaling.
-        
+
         Returns:
             Image: as an np.array
-        
+
         Raises:
             FileNotFoundError: If the image is not found or can't be read
         """
@@ -80,10 +80,10 @@ class Dataset():
 
     def get_image_by_name(self, image_name=None):
         """Returns an image based on its file name
-        
+
         Args:
             image_name (None, optional): Imafe file name (without extension)
-        
+
         Returns:
             Image: as an np.array
         """
@@ -91,7 +91,7 @@ class Dataset():
 
     def get_random_image(self):
         """Returns a random image from the dataset
-        
+
         Returns:
             Image: as an np.array
         """
@@ -100,10 +100,10 @@ class Dataset():
     def get_image_id(self, image_path):
         """
         Given an image path, returns the id of the image: the numerical part of the filename
-        
+
         Args:
             image_path (str): path of the image
-        
+
         Returns:
             (str): the id of the image as string
         """
@@ -112,10 +112,10 @@ class Dataset():
     def extract_features(self, image_path):
         """Extracts the features (descriptor) from an image. The features
         are also stored on the disk.
-        
+
         Args:
             image_path (TYPE): This can be the image path or image name
-        
+
         Returns:
             features: List of descriptors for the image
         """
@@ -140,12 +140,12 @@ class Dataset():
 
     def store_features(self, image_path, features, force=False):
         """Stores the extracted features on the disk for subsequent retrieval
-        
+
         Args:
             image_path (str): Image name or path
             features (list): List of descriptors
             force (bool, optional): If `True`, overwrites previously stored features
-        
+
         Returns:
             None
         """
@@ -160,10 +160,10 @@ class Dataset():
     def is_stored(self, image_path):
         """Helper function to check wether the descriptors for a given image
         have been already computed and stores
-        
+
         Args:
             image_path (str): Image name or path
-        
+
         Returns: - `False` if the image is not present in the features database
                  - `list` of features if the image descriptors are present in the database
         """
@@ -177,7 +177,7 @@ class Dataset():
     @staticmethod
     def show_image(img, gray=False, **kwargs):
         """Displays an image
-        
+
         Args:
             img (np.array): The image to show
             gray (bool, optional): Wether to use grayscale colormap

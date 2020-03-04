@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import random
-import torch
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.gridspec import GridSpec
@@ -28,25 +27,26 @@ class Descriptor(object):
             [np.array] -- List of patches
         """
         patches = []
-        height,width,_ = img.shape
+        height, width, _ = img.shape
         for kp in keypoints:
-            mask = np.zeros((height,width), np.uint8)
+            mask = np.zeros((height, width), np.uint8)
 
             pt = (int(kp.pt[0]), int(kp.pt[1]))
 
-            cv2.circle(mask, pt, int(kp.size), (255,255,255), thickness=-1)
+            cv2.circle(mask, pt, int(kp.size), (255, 255, 255), thickness=-1)
 
             # Apply Threshold
             _, thresh = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
 
             # Find Contour
-            contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours = cv2.findContours(
+                thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             x, y, w, h = cv2.boundingRect(contours[0][0])
 
             # Crop masked_data
             feat_patch = img[y:y+h, x:x+w]
-            
+
             # Adding to the features
             patches.append(feat_patch)
         return patches
@@ -54,10 +54,10 @@ class Descriptor(object):
     def describe(self, image):
         """
         Computes the ORB descriptor on the given path.
-        
+
         Args:
             image (str): Image name
-        
+
         Returns:
             list: List of descriptors for the image. If no keypoints are found,
                   the list will contain a single descriptor full of zeros
@@ -66,14 +66,14 @@ class Descriptor(object):
         kp, desc = self.orb.detectAndCompute(image, None)
         desc = np.array(desc, dtype=np.float32)
         if desc.size <= 1:
-            desc = np.zeros((1,32))
+            desc = np.zeros((1, 32))
         return desc
 
     @staticmethod
     def show_random_descriptors(img, keypoints, patches, descriptors, N=5):
         """
         Shows N descriptors with the corresponding patches, taken at random.
-        
+
         Args:
             img (np.array): Main image
             patches (list): List of image patches
@@ -90,7 +90,8 @@ class Descriptor(object):
         gs = GridSpec(N, 8, figure=fig)
 
         ax1 = fig.add_subplot(gs[:, :-2])
-        img2 = cv2.drawKeypoints(img, keypoints, None, color=(0,255,0), flags=4)
+        img2 = cv2.drawKeypoints(img, keypoints, None,
+                                 color=(0, 255, 0), flags=4)
         ax1.set_title("Image")
         plt.imshow(img2)
         plt.axis('off')
@@ -119,7 +120,7 @@ class Descriptor(object):
     @staticmethod
     def show_corners_on_image(img, corners):
         """Shows the extracted corners on the image
-        
+
         Args:
             img (np.array): image array
             corners (np.array): binary corner image
