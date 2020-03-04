@@ -125,7 +125,7 @@ class CBIR(object):
         Args:
             image_path (str): path of the image to encode
         """
-        if self.dataset.sift_implementation == "alexnet":
+        if self.dataset.sift_implementation == "alexnet_encoder":
             return
 
         features = self.extract_features(image_path)
@@ -178,7 +178,7 @@ class CBIR(object):
             return self.index[image_id]
 
         # otherwise calculate it
-        if self.dataset.sift_implementation.lower() == "alexnet":
+        if self.dataset.sift_implementation.lower() == "alexnet_encoder":
             image = self.dataset.get_image_by_name(image_id + ".jpg")
             embedding = self.dataset.alexnet.encode(image)
         else:

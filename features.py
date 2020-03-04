@@ -9,8 +9,7 @@ from pytorch_sift.pytorch_sift import SIFTNet
 
 
 class Descriptor(object):
-    def __init__(self, patch_size=65, mser_min_area=100,
-                 mser_max_area=200000):
+    def __init__(self, patch_size=65):
         # this sets self.describe to the SIFTNet callable
         self.patch_size = (int(patch_size), int(patch_size))
         self.sift = SIFTNet(patch_size=patch_size,
@@ -18,26 +17,8 @@ class Descriptor(object):
 
         self.orb = cv2.ORB.create(1500, nlevels=32)
 
-    def find_keypoints(self, image):
-        # Getting the mser regions for drawing Bounding-Box
-        blobs, bboxes = self.mser.detectRegions(image)
-        return blobs
-
-    def fit_bounding_box_to_mser(self, blobs):
-        return self.fit_poligon_to_blobs(blobs, cv2.minAreaRect)
-
-    def fit_ellipses_to_mser(self, blobs):
-        return self.fit_poligon_to_blobs(blobs, cv2.fitEllipse)
-
-    @staticmethod
-    def fit_poligon_to_blobs(blobs, poligon_fit):
-        poligons = []
-        for blob in blobs:
-            poligons.append(poligon_fit(blob))
-        return poligons
-
     def extract_patches(self, img, keypoints):
-        """Extracts the patches associated to the keypoints of the MSER
+        """Extracts the patches associated to the keypoints of a
         descriptors.
 
         Arguments:
@@ -70,37 +51,16 @@ class Descriptor(object):
             patches.append(feat_patch)
         return patches
 
-    @staticmethod
-    def crop_rectangle(img, rect, patch_size):
-        # rotate img
-        angle = rect[2]
-        rows, cols = img.shape[0], img.shape[1]
-        M = cv2.getRotationMatrix2D((cols/2, rows/2), angle, 1)
-        img_rot = cv2.warpAffine(img, M, (cols, rows))
-
-        # rotate a bigger bounding box
-        rect0 = (rect[0], rect[1], 0.0)
-        box = cv2.boxPoints(rect0)
-        pts = np.int0(cv2.transform(np.array([box]), M))[0]
-        pts[pts < 0] = 0
-
-        # crop
-        img_crop = img_rot[pts[1][1]:pts[0][1],
-                           pts[1][0]:pts[2][0]]
-
-        # TODO: check why this happens
-        if img_crop.size == 0:
-            return None
-
-        # Squares the patch
-        patch = cv2.resize(img_crop, patch_size,
-                           interpolation=cv2.INTER_LANCZOS4)
-        return patch
-
     def describe(self, image):
         """
-        Computes the SIFT descriptor on the given path.
-        Note that we implement vlfeat version of sift
+        Computes the ORB descriptor on the given path.
+        
+        Args:
+            image (str): Image name
+        
+        Returns:
+            list: List of descriptors for the image. If no keypoints are found,
+                  the list will contain a single descriptor full of zeros
         """
         # find the keypoints and descriptors with ORB (like SIFT)
         kp, desc = self.orb.detectAndCompute(image, None)
@@ -108,40 +68,6 @@ class Descriptor(object):
         if desc.size <= 1:
             desc = np.zeros((1,32))
         return desc
-
-    def extract_features(self, patches):
-        with torch.no_grad():
-            return self.sift(torch.as_tensor(patches, dtype=torch.float32).unsqueeze(1)).squeeze().cpu().numpy()
-
-    @staticmethod
-    def show_mser(img, blobs, bounding_boxes=None, ellipses=None):
-        # Drawing ellipses and bounding boxes on the image
-        canvas1 = img.copy()
-        if bounding_boxes is not None:
-            for rect in bounding_boxes:
-                box = cv2.boxPoints(rect)
-                # convert all coordinates floating point values to int
-                box = np.int0(box)
-                # draw a red 'nghien' rectangle
-                canvas1 = cv2.drawContours(canvas1, [box], 0, (0, 255, 0), 1)
-        if ellipses is not None:
-            for rect in ellipses:
-                cv2.ellipse(canvas1, rect, (255, 0, 0))
-
-        # Drawing all the blobs on their own image
-        canvas2 = np.zeros_like(img)
-        for cnt in blobs:
-            # Show in separate image
-            xx = cnt[:, 0]
-            yy = cnt[:, 1]
-            color = [random.randint(0, 255) for _ in range(3)]
-            canvas2[yy, xx] = color
-
-        # Show
-        plt.subplot(121)
-        plt.imshow(canvas1)
-        plt.subplot(122)
-        plt.imshow(canvas2)
 
     @staticmethod
     def show_random_descriptors(img, patches, descriptors, N=5):
