@@ -109,7 +109,7 @@ class Descriptor(object):
                 ax.set_title("Descriptor")
             N = len(some_descriptors[n])
             x = np.arange(N)
-            plt.bar(x, some_descriptors[n], color=rvb(x / N), width=1.0)
+            plt.bar(x, some_descriptors[n], width=1.0)
             plt.axis('off')
 
     @staticmethod
