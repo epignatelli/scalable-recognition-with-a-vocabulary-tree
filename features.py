@@ -48,9 +48,7 @@ class Descriptor(object):
 
         Arguments:
             img {np.array} -- Image from which the patches are extracted
-            poligons -- Bounding boxes as returned by the function
-                        fit_bounding_box_to_mser() or fit_ellipses_to_mser()
-
+            keypoints -- Keypoits relative to the regions to extract
         Returns:
             [np.array] -- List of patches
         """
@@ -61,15 +59,20 @@ class Descriptor(object):
 
             pt = (int(kp.pt[0]), int(kp.pt[1]))
 
-            cv2.circle(mask,pt,int(kp.size),(255,255,255),thickness=-1)
+            cv2.circle(mask, pt, int(kp.size), (255,255,255), thickness=-1)
 
-            masked_data = cv2.bitwise_and(img, img, mask=mask)
+            # Apply Threshold
+            _, thresh = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
 
-            _,thresh = cv2.threshold(mask,1,255,cv2.THRESH_BINARY)
-            contours = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-            x,y,w,h = cv2.boundingRect(contours[0])
-            feat_patch = masked_data[y:y+h,x:x+w]
+            # Find Contour
+            contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            x, y, w, h = cv2.boundingRect(contours[0][0])
+
+            # Crop masked_data
+            feat_patch = img[y:y+h, x:x+w]
             
+            # Adding to the features
             patches.append(feat_patch)
         return patches
 
