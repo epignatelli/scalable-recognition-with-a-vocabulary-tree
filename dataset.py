@@ -6,33 +6,18 @@ from os.path import isfile, join
 import random
 import h5py
 import matplotlib.pyplot as plt
-from features import Descriptor
-from ezsift import EzSIFT
-from alexnet import AlexNet
 
 
 class Dataset():
-    def __init__(self, folder="data/jpg", sift_implementation="orb"):
+    def __init__(self, folder="data/jpg"):
         """Dataset initialization
-
         Args:
             folder (str, optional): Path of the folder where images are. Images
                 must be in jpg format
-            sift_implementation (str, optional): What kind of sift implementation
-                to use.
         """
         self.path = folder
-        self.all_images = [f for f in listdir(self.path) if isfile(join(self.path, f))]
-        self.sift_implementation = sift_implementation
-        if sift_implementation.lower() == "ezsift":
-            self.descriptor = EzSIFT()
-        elif sift_implementation.lower() == "alexnet_descriptor":
-            self.descriptor = AlexNet()
-        else:
-            self.descriptor = Descriptor()
-
-        if sift_implementation == "alexnet_encoder":
-            self.alexnet = AlexNet()
+        self.all_images = [f for f in sorted(listdir(
+            self.path)) if isfile(join(self.path, f))]
 
     def __str__(self):
         images = []
@@ -59,8 +44,7 @@ class Dataset():
 
         Args:
             image_path (TYPE): Image path
-            scale (float, optional): Scale factor for image resizing. Default is
-                1. which means no scaling.
+            scale (float, optional): Scale factor for image resizing. Default is 1, which means no scaling.
 
         Returns:
             Image: as an np.array
@@ -121,7 +105,8 @@ class Dataset():
         """
         # check if the feature can be retrieved from disk
         if self.is_stored(image_path):
-            hdf5_path = os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation)
+            hdf5_path = os.path.join(
+                self.path, "..", "features_%s.hdf5" % self.sift_implementation)
             with h5py.File(hdf5_path, "r") as file:
                 image_id = self.get_image_id(image_path)
                 features = np.array(file[image_id])
@@ -167,7 +152,8 @@ class Dataset():
         Returns: - `False` if the image is not present in the features database
                  - `list` of features if the image descriptors are present in the database
         """
-        hdf5_path = os.path.join(self.path, "..", "features_%s.hdf5" % self.sift_implementation)
+        hdf5_path = os.path.join(
+            self.path, "..", "features_%s.hdf5" % self.sift_implementation)
         if not os.path.isfile(hdf5_path):
             return False
         with h5py.File(hdf5_path, "r") as file:

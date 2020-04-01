@@ -6,7 +6,7 @@ import matplotlib.colors as mcolors
 from matplotlib.gridspec import GridSpec
 
 
-class Descriptor(object):
+class Orb(object):
     def __init__(self, patch_size=65):
         self.patch_size = (int(patch_size), int(patch_size))
         self.orb = cv2.ORB.create(1500, nlevels=32)

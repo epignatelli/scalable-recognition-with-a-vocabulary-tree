@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from sklearn.cluster import MiniBatchKMeans
 import networkx as nx
 import matplotlib.pyplot as plt
 from dataset import Dataset
@@ -12,79 +11,30 @@ import pickle
 
 
 class CBIR(object):
-    def __init__(self, root, n_branches, depth, sift_implementation="orb"):
-        self.dataset = Dataset(root, sift_implementation=sift_implementation)
-        self.n_branches = n_branches
-        self.depth = depth
-        self.tree = {}
-        self.nodes = {}
+    def __init__(self, root, encoder, descriptor=None):
+        self.dataset = Dataset(root)
+        self.descriptor = descriptor
+        self.encoder = encoder
         self.index = {}
-        self.graph = nx.DiGraph()
-
-        # private:
-        self._current_index = 0
-        return
 
     def extract_features(self, image=None):
         if (image is not None):
-            return self.dataset.extract_features(image)
+            return self.descriptor.describe(image)
 
         features = []
         times = []
         total = len(self.dataset.all_images)
         for i, path in enumerate(self.dataset.all_images):
             start = time.time()
-            features.extend(self.dataset.extract_features(path))
+            features.extend(self.descriptor.describe(path))
             times.append(time.time() - start)
             avg = np.mean(times)
             eta = avg * total - avg * (i + 1)
-            print("Extracting features %d/%d from image %s - ETA: %2fs" %
-                  (i + 1, total, path, eta), end="\r")
+            print("Extracting features %d/%d from image %s - ETA: %2fs" % (i + 1, total, path, eta), end="\r")
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
-    def fit(self, features, node=0, root=None, current_depth=0):
-        """
-        Generates a hierarchical vocabulary tree representation of some input features
-        using hierarchical k-means clustering.
-        This function populates the graph and stores the value of the features in
-        `self.nodes` as a dictionary Dict[int, numpy.ndarray] that stores the actual value for each node
-        Args:
-            features (numpy.ndarray): a two dimensional vector of input features where dim 0 is samples and dim 1 is features
-            node (int): current node id to set
-            root (numpy.ndarray): the value of the parent of the `node` as a virtual feature
-            current_depth (int): the depth of the node as the distance in jumps from the very root of the tree
-        """
-        if root is None:
-            root = np.mean(features, axis=0)
-
-        self.nodes[node] = root
-        self.graph.add_node(node)
-
-        # if `node` is a leaf node, return
-        if current_depth >= self.depth or len(features) < self.n_branches:
-            return
-
-        # group features by cluster
-        print("Computing clusters %d/%d with %d features from node %d at level %d\t\t" %
-              (self._current_index, self.n_branches ** self.depth, len(features), node, current_depth), end="\r")
-        model = MiniBatchKMeans(n_clusters=self.n_branches)
-        model.fit(features)
-        children = [[] for i in range(self.n_branches)]
-        for i in range(len(features)):
-            children[model.labels_[i]].append(features[i])
-
-        # cluster children
-        self.tree[node] = []
-        for i in range(self.n_branches):
-            self._current_index += 1
-            self.tree[node].append(self._current_index)
-            self.graph.add_edge(node, self._current_index)
-            self.fit(children[i], self._current_index,
-                     model.cluster_centers_[i], current_depth + 1)
-        return
-
-    def tfidf(self):
+    def create_index(self):
         """
         Generates the inverted index structure using tf-idf.
         This function also calculates the weights for each node as entropy.
@@ -96,8 +46,11 @@ class CBIR(object):
         done = 0
         for i, image_path in enumerate(self.dataset.all_images):
             start = time.time()
-            self.propagate(image_path)
-            self.encode(self.dataset.get_image_id(image_path))
+            image_id = self.dataset.get_image_id(image_path)
+            # if the imaged is already indexed, return
+            if not self.is_encoded(image_id):
+                embedding = self.encode(image_id)
+                self.index[image_id] = embedding
             times.append(time.time() - start)
             avg = np.mean(times)
             eta = avg * total - avg * (i + 1)
@@ -116,85 +69,7 @@ class CBIR(object):
         print("Inverted index generated")
         return
 
-    def propagate(self, image_path):
-        """
-        Proapgates the features of an image down the tree, until the find a leaf.
-        Every time they pass through a node, they leave a fingerprint, by storing a key value pairm
-        where the key is the id of the image and the value is the number of times that node is visited.
-        This results into an tf-idf scheme.
-        Args:
-            image_path (str): path of the image to encode
-        """
-        if self.dataset.sift_implementation == "alexnet_encoder":
-            return
-
-        features = self.extract_features(image_path)
-        image_id = self.dataset.get_image_id(image_path)
-        for feature in features:
-            path = self.propagate_feature(feature)
-            for i in range(len(path)):
-                node = path[i]
-                # add tfidf
-                if image_id not in self.graph.nodes[node]:
-                    self.graph.nodes[node][image_id] = 1
-                else:
-                    self.graph.nodes[node][image_id] += 1
-        return
-
-    def propagate_feature(self, feature, node=0):
-        """
-        Propagates a feature, down the tree, and returns the paths in the form of node ids.
-        Args:
-            feature (numpy.ndarray): The feature to lookup
-            root (List[int]): Node id to start the search from.
-                        Default is 0, meaning the very root of the tree
-        """
-        path = [node]
-        while self.graph.out_degree(node):  # recur, stop if leaf
-            min_dist = float("inf")
-            closest = None
-            for child in self.graph[node]:
-                distance = np.linalg.norm(
-                    [self.nodes[child] - feature])  # l1 norm
-                if distance < min_dist:
-                    min_dist = distance
-                    closest = child
-            path.append(closest)
-            node = closest
-        return path
-
-    def encode(self, image_id, return_graph=False):
-        if return_graph:
-            subgraph = self.graph.subgraph(
-                [k for k, v in self.graph.nodes(data=image_id, default=None) if v is not None])
-            colours = ["C0"] * len(self.graph.nodes)
-            for node in subgraph.nodes:
-                colours[node] = "C3"
-            self.draw(node_color=colours)
-            return subgraph
-
-        # if the imaged is already indexed, return
-        if self.is_encoded(image_id):
-            return self.index[image_id]
-
-        # otherwise calculate it
-        if self.dataset.sift_implementation.lower() == "alexnet_encoder":
-            image = self.dataset.get_image_by_name(image_id + ".jpg")
-            embedding = self.dataset.alexnet.encode(image)
-        else:
-            # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
-            embedding = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
-
-        # normalise the embeddings
-        embedding = embedding / np.linalg.norm(embedding, ord=2)  # l2 norm
-
-        # store the encoded representation
-        embedding = embedding if not np.isnan(embedding).any() else 0
-        self.index[image_id] = embedding
-
-        return embedding  # * weights
-
-    def is_encoded(self, image_id):
+    def is_indexed(self, image_id):
         return image_id in self.index
 
     def score(self, first_image_path, second_image_path):
@@ -228,13 +103,6 @@ class CBIR(object):
     def store(self, path=None):
         if path is None:
             path = "data"
-
-        # store graph
-        nx.write_gpickle(self.graph, os.path.join(path, "graph.pickle"))
-
-        # store nodes with features
-        with open(os.path.join(path, "nodes.pickle"), "wb") as f:
-            pickle.dump(self.nodes, f)
 
         # store indexed vectors in hdf5
         with open(os.path.join(path, "index.pickle"), "wb") as f:

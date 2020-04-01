@@ -20,11 +20,6 @@ class EzSIFT():
     def __call__(self, img):
         return self.describe(img)
 
-    def describe_parallel(self, paths):
-        with multiprocessing.Pool(8) as p:
-            features = p.map(self.describe, paths)
-        return np.array(features)
-
     def describe(self, img):
         if not os.path.exists('data'):
             os.makedirs('data')
