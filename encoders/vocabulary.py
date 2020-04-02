@@ -133,3 +133,19 @@ class VocabularyTree(object):
             pickle.dump(self.nodes, f)
 
         return True
+
+    def draw(self, figsize=None, node_color=None, layout="tree", labels=None):
+        figsize = (30, 10) if figsize is None else figsize
+        fig = plt.figure(figsize=figsize)
+        layout = layout.lower()
+        if "tree" in layout:
+            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="dot")
+        elif "radial" in layout:
+            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="twopi")
+        else:
+            pos = None
+        if labels is None:
+            nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
+        else:
+            nx.draw(self.graph, pos=pos, labels=labels, node_color=node_color)
+        return fig

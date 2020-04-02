@@ -103,8 +103,6 @@ class Orb(object):
 
             # Getting descriptor and plotting it
             ax = fig.add_subplot(gs[n, -1])
-            clist = [(0, "#c58882"), (1, "#1d201f")]
-            rvb = mcolors.LinearSegmentedColormap.from_list("", clist)
             if n == 0:
                 ax.set_title("Descriptor")
             N = len(some_descriptors[n])

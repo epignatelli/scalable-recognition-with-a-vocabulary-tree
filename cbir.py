@@ -8,6 +8,7 @@ import warnings
 import multiprocessing
 import h5py
 import pickle
+import utils
 
 
 class CBIR(object):
@@ -15,48 +16,57 @@ class CBIR(object):
         self.dataset = Dataset(root)
         self.descriptor = descriptor
         self.encoder = encoder
-        self.index = {}
+        self.database = {}
 
     def extract_features(self, image=None):
+        if self.descriptor is None:
+            raise ValueError("You have not defined a features descriptor. "
+                             "For a full list of descriptors, "
+                             "check out the 'descriptors' namespace")
+
         if (image is not None):
             return self.descriptor.describe(image)
-
-        features = []
-        times = []
-        total = len(self.dataset.all_images)
-        for i, path in enumerate(self.dataset.all_images):
-            start = time.time()
-            features.extend(self.descriptor.describe(path))
-            times.append(time.time() - start)
-            avg = np.mean(times)
-            eta = avg * total - avg * (i + 1)
-            print("Extracting features %d/%d from image %s - ETA: %2fs" % (i + 1, total, path, eta), end="\r")
+        print("Extracting features...")
+        features = utils.show_progress(self.descriptor.describe, self.dataset.all_images)
+        # features = []
+        # times = []
+        # total = len(self.dataset.all_images)
+        # for i, path in enumerate(self.dataset.all_images):
+        #     start = time.time()
+        #     features.extend(self.descriptor.describe(path))
+        #     times.append(time.time() - start)
+        #     avg = np.mean(times)
+        #     eta = avg * total - avg * (i + 1)
+        #     print("Extracting features %d/%d from image %s - ETA: %2fs" % (i + 1, total, path, eta), end="\r")
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
-    def create_index(self):
+    def index(self):
         """
         Generates the inverted index structure using tf-idf.
         This function also calculates the weights for each node as entropy.
         """
         # create inverted index
-        print("\nGenerating index")
-        times = []
-        total = len(self.dataset.all_images)
-        done = 0
-        for i, image_path in enumerate(self.dataset.all_images):
-            start = time.time()
-            image_id = self.dataset.get_image_id(image_path)
-            # if the imaged is already indexed, return
-            if not self.is_encoded(image_id):
-                embedding = self.encode(image_id)
-                self.index[image_id] = embedding
-            times.append(time.time() - start)
-            avg = np.mean(times)
-            eta = avg * total - avg * (i + 1)
-            done += 1
-            print("Indexing image %d/%d:  %s - ETA: %2fs" %
-                  (done + 1, total, image_path, eta), end="\r")
+        print("\nGenerating index...")
+        embed = lambda id, db: db.update("id", self.encode(id)) if self.is_encoded(id)
+        utils.show_progress(embed, self.dataset.all_images, db=self.database)
+
+        # times = []
+        # total = len(self.dataset.all_images)
+        # done = 0
+        # for i, image_path in enumerate(self.dataset.all_images):
+        #     start = time.time()
+        #     image_id = self.dataset.get_image_id(image_path)
+        #     # if the imaged is already indexed, return
+        #     if not self.is_encoded(image_id):
+        #         embedding = self.encode(image_id)
+        #         self.datbase[image_id] = embedding
+        #     times.append(time.time() - start)
+        #     avg = np.mean(times)
+        #     eta = avg * total - avg * (i + 1)
+        #     done += 1
+        #     print("Indexing image %d/%d:  %s - ETA: %2fs" %
+        #           (done + 1, total, image_path, eta), end="\r")
 
         # set weights of node based on entropy
         print("\nCalculating weights")
@@ -70,14 +80,13 @@ class CBIR(object):
         return
 
     def is_indexed(self, image_id):
-        return image_id in self.index
+        return image_id in self.datbase
 
     def score(self, first_image_path, second_image_path):
         """
         Measures the similatiries between the set of paths of the features of each image.
         """
         # get the vectors of the images
-
         db_id = self.dataset.get_image_id(first_image_path)
         query_id = self.dataset.get_image_id(second_image_path)
         d = self.encode(db_id, return_graph=False)
@@ -100,13 +109,13 @@ class CBIR(object):
             scores.items(), key=lambda item: item[1])}
         return sorted_scores
 
-    def store(self, path=None):
+    def save(self, path=None):
         if path is None:
             path = "data"
 
         # store indexed vectors in hdf5
         with open(os.path.join(path, "index.pickle"), "wb") as f:
-            pickle.dump(self.index, f)
+            pickle.dump(self.datbase, f)
 
         return True
 
@@ -133,7 +142,7 @@ class CBIR(object):
         try:
             with open(os.path.join(path, "index.pickle"), "rb") as f:
                 indexed = pickle.load(f)
-                self.index = indexed
+                self.datbase = indexed
         except:
             print("Cannot load index file from %s/index.pickle" % path)
         return True
@@ -151,19 +160,3 @@ class CBIR(object):
             ax[i].set_title("#%d. %s Score:%.3f" %
                             (i, img_ids[i], scores[i]))
         return
-
-    def draw(self, figsize=None, node_color=None, layout="tree", labels=None):
-        figsize = (30, 10) if figsize is None else figsize
-        fig = plt.figure(figsize=figsize)
-        layout = layout.lower()
-        if "tree" in layout:
-            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="dot")
-        elif "radial" in layout:
-            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="twopi")
-        else:
-            pos = None
-        if labels is None:
-            nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
-        else:
-            nx.draw(self.graph, pos=pos, labels=labels, node_color=node_color)
-        return fig
