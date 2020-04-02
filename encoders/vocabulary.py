@@ -38,7 +38,8 @@ class VocabularyTree(object):
 
         # group features by cluster
         print("Computing clusters %d/%d with %d features from node %d at level %d\t\t" %
-              (self._current_index, self.n_branches ** self.depth, len(features), node, current_depth), end="\r")
+              (self._current_index, self.n_branches ** self.depth,
+               len(features), node, current_depth), end="\r")
         model = MiniBatchKMeans(n_clusters=self.n_branches)
         model.fit(features)
         children = [[] for i in range(self.n_branches)]
@@ -121,7 +122,7 @@ class VocabularyTree(object):
         self.draw(node_color=colours)
         return subgraph
 
-    def store(self, path=None):
+    def save(self, path=None):
         if path is None:
             path = "data"
 
@@ -141,11 +142,13 @@ class VocabularyTree(object):
         if "tree" in layout:
             pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="dot")
         elif "radial" in layout:
-            pos = nx.drawing.nx_agraph.graphviz_layout(self.graph, prog="twopi")
+            pos = nx.drawing.nx_agraph.graphviz_layout(
+                self.graph, prog="twopi")
         else:
             pos = None
         if labels is None:
-            nx.draw(self.graph, pos=pos, with_labels=True, node_color=node_color)
+            nx.draw(self.graph, pos=pos, with_labels=True,
+                    node_color=node_color)
         else:
             nx.draw(self.graph, pos=pos, labels=labels, node_color=node_color)
         return fig

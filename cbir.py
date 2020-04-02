@@ -3,10 +3,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from dataset import Dataset
-import time
-import warnings
-import multiprocessing
-import h5py
 import pickle
 import utils
 
@@ -18,26 +14,16 @@ class CBIR(object):
         self.encoder = encoder
         self.database = {}
 
-    def extract_features(self, image=None):
+    def extract_features(self):
         if self.descriptor is None:
             raise ValueError("You have not defined a features descriptor. "
                              "For a full list of descriptors, "
                              "check out the 'descriptors' namespace")
 
-        if (image is not None):
-            return self.descriptor.describe(image)
         print("Extracting features...")
-        features = utils.show_progress(self.descriptor.describe, self.dataset.all_images)
-        # features = []
-        # times = []
-        # total = len(self.dataset.all_images)
-        # for i, path in enumerate(self.dataset.all_images):
-        #     start = time.time()
-        #     features.extend(self.descriptor.describe(path))
-        #     times.append(time.time() - start)
-        #     avg = np.mean(times)
-        #     eta = avg * total - avg * (i + 1)
-        #     print("Extracting features %d/%d from image %s - ETA: %2fs" % (i + 1, total, path, eta), end="\r")
+        features = utils.show_progress(
+            self.descriptor.describe, self.dataset.all_images)
+
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
@@ -48,28 +34,13 @@ class CBIR(object):
         """
         # create inverted index
         print("\nGenerating index...")
-        embed = lambda id, db: db.update("id", self.encode(id)) if self.is_encoded(id)
+
+        def embed(id, db): return db.update(
+            "id", self.encoder.embedding(id)) if self.is_indexed(id) else db[id]
         utils.show_progress(embed, self.dataset.all_images, db=self.database)
 
-        # times = []
-        # total = len(self.dataset.all_images)
-        # done = 0
-        # for i, image_path in enumerate(self.dataset.all_images):
-        #     start = time.time()
-        #     image_id = self.dataset.get_image_id(image_path)
-        #     # if the imaged is already indexed, return
-        #     if not self.is_encoded(image_id):
-        #         embedding = self.encode(image_id)
-        #         self.datbase[image_id] = embedding
-        #     times.append(time.time() - start)
-        #     avg = np.mean(times)
-        #     eta = avg * total - avg * (i + 1)
-        #     done += 1
-        #     print("Indexing image %d/%d:  %s - ETA: %2fs" %
-        #           (done + 1, total, image_path, eta), end="\r")
-
         # set weights of node based on entropy
-        print("\nCalculating weights")
+        print("\nCalculating weights...")
         N = len(self.dataset)
         for node_id, files in self.graph.nodes(data=True):
             N_i = len(files)
@@ -156,7 +127,7 @@ class CBIR(object):
         scores = list(scores_dict.values())
         for i in range(1, len(ax)):
             ax[i].axis("off")
-            ax[i].imshow(self.dataset.get_image_by_name(f"{img_ids[i]}.jpg"))
+            ax[i].imshow(self.dataset.get_image_by_name("%s.jpg" % img_ids[i]))
             ax[i].set_title("#%d. %s Score:%.3f" %
                             (i, img_ids[i], scores[i]))
         return

@@ -1,8 +1,9 @@
 import numpy as np
+import os
 import cv2
+import h5py
 import random
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from matplotlib.gridspec import GridSpec
 
 
@@ -10,6 +11,24 @@ class Orb(object):
     def __init__(self, patch_size=65):
         self.patch_size = (int(patch_size), int(patch_size))
         self.orb = cv2.ORB.create(1500, nlevels=32)
+
+    def describe(self, image):
+        """
+        Computes the ORB descriptor on the given path.
+
+        Args:
+            image (str): Image name
+
+        Returns:
+            list: List of descriptors for the image. If no keypoints are found,
+                  the list will contain a single descriptor full of zeros
+        """
+        # find the keypoints and descriptors with ORB (like SIFT)
+        kp, desc = self.orb.detectAndCompute(image, None)
+        desc = np.array(desc, dtype=np.float32)
+        if desc.size <= 1:
+            desc = np.zeros((1, 32))
+        return desc
 
     def extract_patches(self, img, keypoints):
         """Extracts the patches associated to the keypoints of a
@@ -46,23 +65,41 @@ class Orb(object):
             patches.append(feat_patch)
         return patches
 
-    def describe(self, image):
-        """
-        Computes the ORB descriptor on the given path.
+    def store(self, image_path, features, force=False):
+        """Stores the extracted features on the disk for subsequent retrieval
 
         Args:
-            image (str): Image name
+            image_path (str): Image name or path
+            features (list): List of descriptors
+            force (bool, optional): If `True`, overwrites previously stored features
 
         Returns:
-            list: List of descriptors for the image. If no keypoints are found,
-                  the list will contain a single descriptor full of zeros
+            None
         """
-        # find the keypoints and descriptors with ORB (like SIFT)
-        kp, desc = self.orb.detectAndCompute(image, None)
-        desc = np.array(desc, dtype=np.float32)
-        if desc.size <= 1:
-            desc = np.zeros((1, 32))
-        return desc
+        if self.is_stored(image_path) and not force:
+            return
+        image_id = self.get_image_id(image_path)
+        with h5py.File(os.path.join(self.path, "..", "features_orb.hdf5"), "a") as file:
+            features = np.array(features)
+            file.create_dataset(image_id, features.shape, data=features)
+        return
+
+    def is_stored(self, image_path):
+        """Helper function to check wether the descriptors for a given image
+        have been already computed and stores
+
+        Args:
+            image_path (str): Image name or path
+
+        Returns: - `False` if the image is not present in the features database
+                 - `list` of features if the image descriptors are present in the database
+        """
+        hdf5_path = os.path.join(self.path, "..", "features_orb.hdf5")
+        if not os.path.isfile(hdf5_path):
+            return False
+        with h5py.File(hdf5_path, "r") as file:
+            return self.get_image_id(image_path) in file
+        return False
 
     @staticmethod
     def show_random_descriptors(img, keypoints, patches, descriptors, N=5):
