@@ -5,11 +5,11 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
-import multiprocessing
 import warnings
+from descriptor_base import DescriptorBase
 
 
-class EzSIFT():
+class EzSIFT(DescriptorBase):
     def __init__(self):
         if os.name == "nt":
             self.program = "./ezsift_win"

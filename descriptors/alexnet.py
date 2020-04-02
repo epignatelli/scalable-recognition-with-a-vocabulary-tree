@@ -1,8 +1,9 @@
 import torch
 import torchvision
+from descriptor_base import DescriptorBase
 
 
-class AlexNet(object):
+class AlexNet(DescriptorBase):
     def __init__(self):
         self.alexnet = torchvision.models.alexnet(pretrained=True)
 

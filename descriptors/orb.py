@@ -5,9 +5,11 @@ import h5py
 import random
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+import utils
+from descriptor_base import DescriptorBase
 
 
-class Orb(object):
+class Orb(DescriptorBase):
     def __init__(self, patch_size=65):
         self.patch_size = (int(patch_size), int(patch_size))
         self.orb = cv2.ORB.create(1500, nlevels=32)
@@ -78,7 +80,7 @@ class Orb(object):
         """
         if self.is_stored(image_path) and not force:
             return
-        image_id = self.get_image_id(image_path)
+        image_id = utils.get_image_id(image_path)
         with h5py.File(os.path.join(self.path, "..", "features_orb.hdf5"), "a") as file:
             features = np.array(features)
             file.create_dataset(image_id, features.shape, data=features)
@@ -98,7 +100,7 @@ class Orb(object):
         if not os.path.isfile(hdf5_path):
             return False
         with h5py.File(hdf5_path, "r") as file:
-            return self.get_image_id(image_path) in file
+            return utils.get_image_id(image_path) in file
         return False
 
     @staticmethod

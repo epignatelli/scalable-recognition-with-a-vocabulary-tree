@@ -3,9 +3,10 @@ from sklearn.cluster import MiniBatchKMeans
 
 
 class VocabularyTree(object):
-    def __init__(self, n_branches, depth):
+    def __init__(self, n_branches, depth, descriptor):
         self.n_branches = n_branches
         self.depth = depth
+        self.descriptor = descriptor
 
         self.tree = {}
         self.nodes = {}
@@ -13,6 +14,17 @@ class VocabularyTree(object):
 
         # private:
         self._current_index = 0
+
+    def extract_features(self):
+        if self.descriptor is None:
+            raise ValueError("You have not defined a features descriptor. "
+                             "For a full list of descriptors, "
+                             "check out the 'descriptors' namespace")
+        print("Extracting features...")
+        features = utils.show_progress(
+            self.descriptor.describe, self.dataset.all_images)
+        print("\n%d features extracted" % len(features))
+        return np.array(features)
 
     def fit(self, features, node=0, root=None, current_depth=0):
         """

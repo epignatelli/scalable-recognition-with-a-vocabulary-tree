@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
 from dataset import Dataset
 import pickle
@@ -8,22 +7,10 @@ import utils
 
 
 class CBIR(object):
-    def __init__(self, root, encoder, descriptor=None):
+    def __init__(self, root, encoder):
         self.dataset = Dataset(root)
-        self.descriptor = descriptor
         self.encoder = encoder
         self.database = {}
-
-    def extract_features(self):
-        if self.descriptor is None:
-            raise ValueError("You have not defined a features descriptor. "
-                             "For a full list of descriptors, "
-                             "check out the 'descriptors' namespace")
-        print("Extracting features...")
-        features = utils.show_progress(
-            self.descriptor.describe, self.dataset.all_images)
-        print("\n%d features extracted" % len(features))
-        return np.array(features)
 
     def index(self):
         """
@@ -81,30 +68,12 @@ class CBIR(object):
 
         return True
 
-    def load(self, path=None):
-        if path is None:
-            path = "data"
-
-        # load graph
+    def load(self, path="data"):
+        # load indexed vectors from pickle
         try:
-            graph = nx.read_gpickle(os.path.join(path, "graph.pickle"))
-            self.graph = graph
-        except:
-            print("Cannot read graph file at %s/graph.pickle" % path)
-
-        # load nodes with features
-        try:
-            with open(os.path.join(path, "nodes.pickle"), "rb") as f:
-                nodes = pickle.load(f)
-                self.nodes = nodes
-        except:
-            print("Cannote read nodes file at %s/nodes.pickle" % path)
-
-        # load indexed vectors from hdf5
-        try:
-            with open(os.path.join(path, "index.pickle"), "rb") as f:
-                indexed = pickle.load(f)
-                self.datbase = indexed
+            with open(os.path.join(path, "database.pickle"), "rb") as f:
+                database = pickle.load(f)
+                self.database = database
         except:
             print("Cannot load index file from %s/index.pickle" % path)
         return True
