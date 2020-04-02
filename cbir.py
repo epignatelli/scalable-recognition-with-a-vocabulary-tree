@@ -19,11 +19,9 @@ class CBIR(object):
             raise ValueError("You have not defined a features descriptor. "
                              "For a full list of descriptors, "
                              "check out the 'descriptors' namespace")
-
         print("Extracting features...")
         features = utils.show_progress(
             self.descriptor.describe, self.dataset.all_images)
-
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
@@ -34,21 +32,14 @@ class CBIR(object):
         """
         # create inverted index
         print("\nGenerating index...")
-
-        def embed(id, db): return db.update(
-            "id", self.encoder.embedding(id)) if self.is_indexed(id) else db[id]
-        utils.show_progress(embed, self.dataset.all_images, db=self.database)
-
-        # set weights of node based on entropy
-        print("\nCalculating weights...")
-        N = len(self.dataset)
-        for node_id, files in self.graph.nodes(data=True):
-            N_i = len(files)
-            if N_i:  # if the node is visited, calculate the weight, otherwise, leave it as initialised
-                self.graph.nodes[node_id]["w"] = np.log(
-                    N / N_i)  # calculate entropy
-        print("Inverted index generated")
+        utils.show_progress(self.embedding, self.dataset.all_images)
         return
+
+    def embedding(self, image_path):
+        image_id = self.dataset.get_image_id(image_path)
+        if not self.is_indexed(image_id):
+            self.database[image_id] = self.encoder.embedding(image_id)
+        return self.database[image_id]
 
     def is_indexed(self, image_id):
         return image_id in self.datbase
