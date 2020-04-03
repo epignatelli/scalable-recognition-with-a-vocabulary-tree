@@ -1,6 +1,6 @@
 import torch
 import torchvision
-from descriptor_base import DescriptorBase
+from .descriptor_base import DescriptorBase
 
 
 class AlexNet(DescriptorBase):

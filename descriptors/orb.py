@@ -6,7 +6,7 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import utils
-from descriptor_base import DescriptorBase
+from .descriptor_base import DescriptorBase
 
 
 class Orb(DescriptorBase):

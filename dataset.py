@@ -35,7 +35,7 @@ class Dataset():
         if type(idx) is str:
             return self.get_image_by_name(idx)
         else:
-            return self.all_images[idx]
+            return self.__getitem__(str(self.all_images[idx]))
 
     def read_image(self, image_path, scale=1.):
         """Reads an image from the image folder

@@ -22,38 +22,34 @@ class CBIR(object):
         utils.show_progress(self.embedding, self.dataset.all_images)
         return
 
-    def embedding(self, image_path):
-        image_id = self.utils.get_image_id(image_path)
-        if not self.is_indexed(image_id):
-            self.database[image_id] = self.encoder.embedding(image_id)
-        return self.database[image_id]
-
     def is_indexed(self, image_id):
         return image_id in self.datbase
 
-    def score(self, first_image_path, second_image_path):
+    def embedding(self, image_id):
+        if not self.is_indexed(image_id):
+            image = self.dataset.read(image_id)
+            self.database[image_id] = self.encoder.embedding(image)
+        return self.database[image_id]
+
+    def score(self, db_id, query_id):
         """
         Measures the similatiries between the set of paths of the features of each image.
         """
         # get the vectors of the images
-        db_id = self.utils.get_image_id(first_image_path)
-        query_id = self.utils.get_image_id(second_image_path)
-        d = self.encode(db_id, return_graph=False)
-        q = self.encode(query_id, return_graph=False)
+        d = self.embedding(db_id, return_graph=False)
+        q = self.embedding(query_id, return_graph=False)
         d = d / np.linalg.norm(d)
         q = q / np.linalg.norm(q)
         # simplified scoring using the l2 norm
         score = np.linalg.norm(d - q, ord=2)
         return score if not np.isnan(score) else 1e6
 
-    def retrieve(self, query_image_path, n=4):
+    def retrieve(self, query_id, n=4):
         # propagate the query down the tree
-        self.propagate(query_image_path)
-
         scores = {}
         for database_image_path in self.dataset.all_images:
-            db_id = self.utils.get_image_id(database_image_path)
-            scores[db_id] = self.score(database_image_path, query_image_path)
+            db_id = utils.get_image_id(database_image_path)
+            scores[db_id] = self.score(database_image, query_image)
         sorted_scores = {k: v for k, v in sorted(
             scores.items(), key=lambda item: item[1])}
         return sorted_scores

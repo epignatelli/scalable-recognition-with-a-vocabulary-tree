@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import warnings
-from descriptor_base import DescriptorBase
+from .descriptor_base import DescriptorBase
 
 
 class EzSIFT(DescriptorBase):
