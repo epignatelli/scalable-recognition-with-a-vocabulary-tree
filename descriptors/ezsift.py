@@ -11,6 +11,7 @@ from descriptor_base import DescriptorBase
 
 class EzSIFT(DescriptorBase):
     def __init__(self):
+        super(EzSIFT, self).__init__("data")
         if os.name == "nt":
             self.program = "./ezsift_win"
         elif os.name == "posix":

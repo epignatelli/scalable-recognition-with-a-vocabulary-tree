@@ -11,6 +11,7 @@ from descriptor_base import DescriptorBase
 
 class Orb(DescriptorBase):
     def __init__(self, patch_size=65):
+        super(Orb, self).__init__("data")
         self.patch_size = (int(patch_size), int(patch_size))
         self.orb = cv2.ORB.create(1500, nlevels=32)
 

@@ -1,5 +1,6 @@
 import networkx as nx
 from sklearn.cluster import MiniBatchKMeans
+import utils
 
 
 class VocabularyTree(object):
@@ -22,7 +23,7 @@ class VocabularyTree(object):
                              "check out the 'descriptors' namespace")
         print("Extracting features...")
         features = utils.show_progress(
-            self.descriptor.describe, self.dataset.all_images)
+            self.descriptor, self.dataset.all_images)
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
@@ -78,7 +79,7 @@ class VocabularyTree(object):
             image_path (str): path of the image to encode
         """
         features = self.extract_features(image_path)
-        image_id = self.dataset.get_image_id(image_path)
+        image_id = self.utils.get_image_id(image_path)
         for feature in features:
             path = self.propagate_feature(feature)
             for i in range(len(path)):
@@ -112,7 +113,9 @@ class VocabularyTree(object):
             node = closest
         return path
 
-    def embedding(self, image_id):
+    def embedding(self, image):
+        image_id = utils.get_image_id(image)
+
         # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]
         embedding = np.array(self.graph.nodes(data=image_id, default=0))[:, 1]
 

@@ -5,6 +5,7 @@ from descriptor_base import DescriptorBase
 
 class AlexNet(DescriptorBase):
     def __init__(self):
+        super(AlexNet, self).__init__("data")
         self.alexnet = torchvision.models.alexnet(pretrained=True)
 
     def describe(self, cv_image):

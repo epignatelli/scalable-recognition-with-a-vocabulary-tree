@@ -23,7 +23,7 @@ class CBIR(object):
         return
 
     def embedding(self, image_path):
-        image_id = self.dataset.get_image_id(image_path)
+        image_id = self.utils.get_image_id(image_path)
         if not self.is_indexed(image_id):
             self.database[image_id] = self.encoder.embedding(image_id)
         return self.database[image_id]
@@ -36,8 +36,8 @@ class CBIR(object):
         Measures the similatiries between the set of paths of the features of each image.
         """
         # get the vectors of the images
-        db_id = self.dataset.get_image_id(first_image_path)
-        query_id = self.dataset.get_image_id(second_image_path)
+        db_id = self.utils.get_image_id(first_image_path)
+        query_id = self.utils.get_image_id(second_image_path)
         d = self.encode(db_id, return_graph=False)
         q = self.encode(query_id, return_graph=False)
         d = d / np.linalg.norm(d)
@@ -52,7 +52,7 @@ class CBIR(object):
 
         scores = {}
         for database_image_path in self.dataset.all_images:
-            db_id = self.dataset.get_image_id(database_image_path)
+            db_id = self.utils.get_image_id(database_image_path)
             scores[db_id] = self.score(database_image_path, query_image_path)
         sorted_scores = {k: v for k, v in sorted(
             scores.items(), key=lambda item: item[1])}
