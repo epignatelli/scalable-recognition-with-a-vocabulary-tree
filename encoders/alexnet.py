@@ -5,6 +5,7 @@ import torchvision
 class AlexNet(object):
     def __init__(self):
         self.alexnet = torchvision.models.alexnet(pretrained=True)
+        self.alexnet.eval()
 
     def embedding(self, cv_image):
         image = torch.as_tensor(cv_image, dtype=torch.float32) / 255
