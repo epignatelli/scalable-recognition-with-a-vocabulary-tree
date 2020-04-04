@@ -19,10 +19,12 @@ class VocabularyTree(object):
 
         # private:
         self._current_index = 0
+        self._propagated = set()
 
-    def extract_features(self, images):
+    def extract_features(self, dataset):
         print("Extracting features...")
-        features = utils.show_progress(self.descriptor, images)
+        func = lambda path: self.descriptor(dataset.read_image(path))
+        features = utils.show_progress(func, dataset)
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
@@ -68,7 +70,7 @@ class VocabularyTree(object):
                      model.cluster_centers_[i], current_depth + 1)
         return
 
-    def propagate(self, image_path):
+    def propagate(self, image):
         """
         Proapgates the features of an image down the tree, until the find a leaf.
         Every time they pass through a node, they leave a fingerprint, by storing a key value pairm
@@ -77,8 +79,11 @@ class VocabularyTree(object):
         Args:
             image_path (str): path of the image to encode
         """
-        features = self.extract_features(image_path)
-        image_id = self.utils.get_image_id(image_path)
+        image_id = utils.get_image_id(image)
+        if (image_id in self._propagated):
+            return
+
+        features = self.descriptor(image)
         for feature in features:
             path = self.propagate_feature(feature)
             for i in range(len(path)):
@@ -88,6 +93,7 @@ class VocabularyTree(object):
                     self.graph.nodes[node][image_id] = 1
                 else:
                     self.graph.nodes[node][image_id] += 1
+        self._propagated.add(image_id)
         return
 
     def propagate_feature(self, feature, node=0):
@@ -113,6 +119,8 @@ class VocabularyTree(object):
         return path
 
     def embedding(self, image):
+        self.propagate(image)
+
         image_id = utils.get_image_id(image)
 
         # weights = np.array(self.graph.nodes(data="w", default=1))[:, 1]

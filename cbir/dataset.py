@@ -51,6 +51,9 @@ class Dataset():
         Raises:
             FileNotFoundError: If the image is not found or can't be read
         """
+        if not self.is_image(image_path):
+            image_path = image_path + ".jpg"
+
         if not (isfile(image_path)):
             image_path = os.path.abspath(join(self.path, image_path))
 
@@ -69,8 +72,7 @@ class Dataset():
         """
         return self.read_image(random.choice(self.image_paths))
 
-    @staticmethod
-    def show_image(img, gray=False, **kwargs):
+    def show_image(self, image, gray=False, **kwargs):
         """Displays an image
 
         Args:
@@ -78,10 +80,21 @@ class Dataset():
             gray (bool, optional): Wether to use grayscale colormap
             **kwargs: Extra options to the plt.imshow() function
         """
+        if isinstance(image, str):
+            image = self.read_image(image)
         if not gray:
-            plt.imshow(img, aspect="equal", **kwargs)
+            plt.imshow(image, aspect="equal", **kwargs)
         else:
-            plt.imshow(img, aspect="equal", cmap="gray", **kwargs)
+            plt.imshow(image, aspect="equal", cmap="gray", **kwargs)
+
+    def is_image(self, path):
+        allowed_extensions = [
+            ".jpeg", ".jpg", ".jp2",
+            ".png",
+            ".bmp",
+            ".tif", ".tiff",
+            "pbm", ".pgm", "ppm"]
+        return os.path.splitext(path)[-1] in allowed_extensions
 
 
 class Subset(object):

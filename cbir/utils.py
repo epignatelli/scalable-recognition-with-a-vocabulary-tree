@@ -1,4 +1,5 @@
 import time
+import datetime
 import hashlib
 import numpy as np
 import torch
@@ -21,7 +22,8 @@ def show_progress(func, iterable, **kwargs):
         times.append(time.time() - start)
         avg = np.mean(times)
         eta = avg * total - avg * (i + 1)
-        print("Progress %d/%d - ETA: %2fs" % (i + 1, total, eta), end="\r")
+        eta = datetime.timedelta(seconds=eta)
+        print("Progress %d/%d - ETA: %s" % (i + 1, total, eta), end="\r")
     return results
 
 
