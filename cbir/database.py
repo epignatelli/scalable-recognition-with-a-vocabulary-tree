@@ -6,7 +6,7 @@ import pickle
 import utils
 
 
-class CBIR(object):
+class Database(object):
     def __init__(self, root, encoder):
         self.dataset = Dataset(root)
         self.encoder = encoder
