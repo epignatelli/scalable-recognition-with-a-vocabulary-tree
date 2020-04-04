@@ -23,11 +23,11 @@ class CBIR(object):
         return
 
     def is_indexed(self, image_id):
-        return image_id in self.datbase
+        return image_id in self.database
 
     def embedding(self, image_id):
         if not self.is_indexed(image_id):
-            image = self.dataset.read(image_id)
+            image = self.dataset.read_image(image_id)
             self.database[image_id] = self.encoder.embedding(image)
         return self.database[image_id]
 
@@ -60,7 +60,7 @@ class CBIR(object):
 
         # store indexed vectors in hdf5
         with open(os.path.join(path, "index.pickle"), "wb") as f:
-            pickle.dump(self.datbase, f)
+            pickle.dump(self.database, f)
 
         return True
 
