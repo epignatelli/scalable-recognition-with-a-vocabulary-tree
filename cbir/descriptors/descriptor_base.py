@@ -1,6 +1,6 @@
 import os
 import h5py
-import utils
+from .. import utils
 import numpy as np
 
 
@@ -8,9 +8,8 @@ class DescriptorBase(object):
     def __init__(self, store_root=None):
         if store_root is not None:
             self._storage = os.path.join(store_root, "features_%s.hdf5" % self.__class__.__name__)
-            open(self._store_root, "a").close()
         else:
-            self._store_root = None
+            self._storage = None
 
     def __call__(self, image):
         image_id = utils.get_image_id(image)

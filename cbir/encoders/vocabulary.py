@@ -1,6 +1,10 @@
+import os
+import pickle
+import numpy as np
+import matplotlib.pyplot as plt
 import networkx as nx
 from sklearn.cluster import MiniBatchKMeans
-import utils
+from .. import utils
 
 
 class VocabularyTree(object):
@@ -16,14 +20,9 @@ class VocabularyTree(object):
         # private:
         self._current_index = 0
 
-    def extract_features(self):
-        if self.descriptor is None:
-            raise ValueError("You have not defined a features descriptor. "
-                             "For a full list of descriptors, "
-                             "check out the 'descriptors' namespace")
+    def extract_features(self, images):
         print("Extracting features...")
-        features = utils.show_progress(
-            self.descriptor, self.dataset.all_images)
+        features = utils.show_progress(self.descriptor, images)
         print("\n%d features extracted" % len(features))
         return np.array(features)
 
@@ -51,8 +50,8 @@ class VocabularyTree(object):
 
         # group features by cluster
         print("Computing clusters %d/%d with %d features from node %d at level %d\t\t" %
-              (self._current_index, self.n_branches ** self.depth,
-               len(features), node, current_depth), end="\r")
+              (self._current_index, self.n_branches ** self.depth, len(features), node, current_depth),
+              end="\r")
         model = MiniBatchKMeans(n_clusters=self.n_branches)
         model.fit(features)
         children = [[] for i in range(self.n_branches)]
@@ -121,10 +120,6 @@ class VocabularyTree(object):
 
         # normalise the embeddings
         embedding = embedding / np.linalg.norm(embedding, ord=2)  # l2 norm
-
-        # store the encoded representation
-        embedding = embedding if not np.isnan(embedding).any() else 0
-        self.index[image_id] = embedding
 
         return embedding  # * weights
 

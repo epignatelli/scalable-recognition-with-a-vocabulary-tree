@@ -14,13 +14,14 @@ class Dataset():
                 must be in jpg format
         """
         self.path = folder
-        self.all_images = [f for f in sorted(listdir(
+        self.image_paths = [f for f in sorted(listdir(
             self.path)) if isfile(join(self.path, f))]
+        self.subset = Subset(self)
 
     def __str__(self):
         images = []
-        for i in range(len(self.all_images)):
-            images.append(self.all_images[i])
+        for i in range(len(self.image_paths)):
+            images.append(self.image_paths[i])
             if i == 5:
                 break
         return str(images)
@@ -29,13 +30,13 @@ class Dataset():
         return str(self)
 
     def __len__(self):
-        return len(self.all_images)
+        return len(self.image_paths)
 
-    def __getitem__(self, idx):
-        if type(idx) is str:
-            return self.get_image_by_name(idx)
-        else:
-            return self.__getitem__(str(self.all_images[idx]))
+    def __getitem__(self, idx, read=False):
+        items = self.image_paths[idx]
+        if read:
+            return list(map(self.read_image, items))
+        return items
 
     def read_image(self, image_path, scale=1.):
         """Reads an image from the image folder
@@ -60,24 +61,13 @@ class Dataset():
         image = cv2.resize(image, (0, 0), fx=scale, fy=scale)
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    def get_image_by_name(self, image_name=None):
-        """Returns an image based on its file name
-
-        Args:
-            image_name (None, optional): Imafe file name (without extension)
-
-        Returns:
-            Image: as an np.array
-        """
-        return self.read_image(image_name)
-
     def get_random_image(self):
         """Returns a random image from the dataset
 
         Returns:
             Image: as an np.array
         """
-        return self.get_image_by_name(random.choice(self.all_images))
+        return self.read_image(random.choice(self.image_paths))
 
     @staticmethod
     def show_image(img, gray=False, **kwargs):
@@ -92,3 +82,13 @@ class Dataset():
             plt.imshow(img, aspect="equal", **kwargs)
         else:
             plt.imshow(img, aspect="equal", cmap="gray", **kwargs)
+
+
+class Subset(object):
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __getitem__(self, idx):
+        subset = self.dataset
+        subset.image_paths = subset.image_paths[idx]
+        return subset

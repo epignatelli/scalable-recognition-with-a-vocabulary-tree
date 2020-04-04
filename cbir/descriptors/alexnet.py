@@ -1,12 +1,13 @@
 import torch
 import torchvision
 from .descriptor_base import DescriptorBase
+from .. import utils
 
 
 class AlexNet(DescriptorBase):
     def __init__(self):
         super(AlexNet, self).__init__("data")
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if utils.is_cuda_capable() else "cpu"
         self._device = torch.device(device)
 
         self.alexnet = torchvision.models.alexnet(pretrained=True)

@@ -5,7 +5,7 @@ import h5py
 import random
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-import utils
+from .. import utils
 from .descriptor_base import DescriptorBase
 
 
@@ -67,42 +67,6 @@ class Orb(DescriptorBase):
             # Adding to the features
             patches.append(feat_patch)
         return patches
-
-    def store(self, image_path, features, force=False):
-        """Stores the extracted features on the disk for subsequent retrieval
-
-        Args:
-            image_path (str): Image name or path
-            features (list): List of descriptors
-            force (bool, optional): If `True`, overwrites previously stored features
-
-        Returns:
-            None
-        """
-        if self.is_stored(image_path) and not force:
-            return
-        image_id = utils.get_image_id(image_path)
-        with h5py.File(os.path.join(self.path, "..", "features_orb.hdf5"), "a") as file:
-            features = np.array(features)
-            file.create_dataset(image_id, features.shape, data=features)
-        return
-
-    def is_stored(self, image_path):
-        """Helper function to check wether the descriptors for a given image
-        have been already computed and stores
-
-        Args:
-            image_path (str): Image name or path
-
-        Returns: - `False` if the image is not present in the features database
-                 - `list` of features if the image descriptors are present in the database
-        """
-        hdf5_path = os.path.join(self.path, "..", "features_orb.hdf5")
-        if not os.path.isfile(hdf5_path):
-            return False
-        with h5py.File(hdf5_path, "r") as file:
-            return utils.get_image_id(image_path) in file
-        return False
 
     @staticmethod
     def show_random_descriptors(img, keypoints, patches, descriptors, N=5):

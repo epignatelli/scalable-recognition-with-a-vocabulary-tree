@@ -1,14 +1,19 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from dataset import Dataset
+from .dataset import Dataset
 import pickle
-import utils
+from . import utils
 
 
 class Database(object):
-    def __init__(self, root, encoder):
-        self.dataset = Dataset(root)
+    def __init__(self, dataset, encoder):
+        if isinstance(dataset, Dataset):
+            self.dataset = dataset
+        elif isinstance(dataset, str):
+            self.dataset = Dataset(dataset)
+        else:
+            raise TypeError("Invalid dataset of type %s" % type(dataset))
         self.encoder = encoder
         self.database = {}
 
@@ -19,15 +24,16 @@ class Database(object):
         """
         # create inverted index
         print("\nGenerating index...")
-        utils.show_progress(self.embedding, self.dataset.all_images)
+        utils.show_progress(self.embedding, self.dataset.image_paths)
         return
 
     def is_indexed(self, image_id):
         return image_id in self.database
 
-    def embedding(self, image_id):
+    def embedding(self, image_path):
+        image = self.dataset.read_image(image_path)
+        image_id = utils.get_image_id(image)
         if not self.is_indexed(image_id):
-            image = self.dataset.read_image(image_id)
             self.database[image_id] = self.encoder.embedding(image)
         return self.database[image_id]
 
@@ -47,9 +53,9 @@ class Database(object):
     def retrieve(self, query_id, n=4):
         # propagate the query down the tree
         scores = {}
-        for database_image_path in self.dataset.all_images:
+        for database_image_path in self.dataset.image_paths:
             db_id = utils.get_image_id(database_image_path)
-            scores[db_id] = self.score(database_image, query_image)
+            scores[db_id] = self.score(db_id, query_id)
         sorted_scores = {k: v for k, v in sorted(
             scores.items(), key=lambda item: item[1])}
         return sorted_scores

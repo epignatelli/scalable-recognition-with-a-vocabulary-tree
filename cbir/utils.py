@@ -1,6 +1,7 @@
 import time
 import hashlib
 import numpy as np
+import torch
 
 
 def show_progress(func, iterable, **kwargs):
@@ -20,7 +21,7 @@ def show_progress(func, iterable, **kwargs):
         times.append(time.time() - start)
         avg = np.mean(times)
         eta = avg * total - avg * (i + 1)
-        print("Progress %d/%d for %s - ETA: %2fs" % (i + 1, total, item, eta), end="\r")
+        print("Progress %d/%d - ETA: %2fs" % (i + 1, total, eta), end="\r")
     return results
 
 
@@ -31,3 +32,15 @@ def get_image_id(array):
     for performance tests
     """
     return hashlib.sha1(array).hexdigest()
+
+
+def is_cuda_capable():
+    CUDA_VERSION = torch._C._cuda_getCompiledVersion()
+    supported = True
+    for d in range(torch.cuda.device_count()):
+        capability = torch.cuda.get_device_capability(d)
+        major = capability[0]
+        minor = capability[1]
+        supported &= major > 3  # too old
+        supported &= CUDA_VERSION <= 9000 and major >= 7 and minor >= 5  # wrong binaries
+    return supported

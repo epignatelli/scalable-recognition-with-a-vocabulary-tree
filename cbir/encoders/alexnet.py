@@ -1,10 +1,11 @@
 import torch
 import torchvision
+from .. import utils
 
 
 class AlexNet(object):
     def __init__(self):
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if utils.is_cuda_capable() else "cpu"
         self._device = torch.device(device)
 
         self.alexnet = torchvision.models.alexnet(pretrained=True)
