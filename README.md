@@ -92,6 +92,51 @@ query_path = "100000.jpeg"
 scores = db.retrieve(query_path)
 db.show_results(query_path, scores)
 ```
+
+## Performance test
+
+```python
+import cbir
+
+dataset = cbir.Dataset().subset[0:100]
+
+orb = cbir.descriptors.Orb()
+voc = cbir.encoders.VocabularyTree(n_branches=4, depth=4, descriptor=orb)
+
+features = voc.extract_features(dataset)
+```
+```python
+%%timeit
+voc.fit(features)
+```
+```
+CPU times: user 1min 43s, sys: 3.17 s, total: 1min 46sde 336 at level 3			
+Wall time: 56.6 s
+```
+```python
+db = cbir.Database(dataset, encoder=voc)
+```
+```python
+%%time
+db.index()
+```
+```
+CPU times: user 9min 2s, sys: 3.85 s, total: 9min 6s
+Wall time: 8min 46s
+```
+```python
+import random
+query = random.choice(dataset)
+```
+```python
+%%time
+scores = db.retrieve(query)
+```
+```
+CPU times: user 73.1 ms, sys: 7 µs, total: 73.1 ms
+Wall time: 72.5 ms
+```
+
 ## [Dev] Add new descriptors or encoders
 Do add your own descriptors and encoders and tell us how they've done!
 
