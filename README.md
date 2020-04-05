@@ -23,12 +23,6 @@ jupyter-notebook
 python cbir/download.py
 ```
 
-#### 4. Go to this link and download the content into your local `data` folder
-
-https://imperialcollegelondon.box.com/s/v0qqkuii1pqbbzofy7957iip08o596er
-
-
-
 ## Literature
 
 #### Datasets:
