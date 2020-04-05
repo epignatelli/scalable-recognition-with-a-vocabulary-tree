@@ -21,6 +21,11 @@ class VocabularyTree(object):
         self._current_index = 0
         self._propagated = set()
 
+    def learn(self, dataset):
+        features = self.extract_features(dataset)
+        self.fit(features)
+        return self
+
     def extract_features(self, dataset):
         print("Extracting features...")
         func = lambda path: self.descriptor(dataset.read_image(path))
