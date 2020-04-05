@@ -30,6 +30,87 @@ jupyter-notebook
 python cbir/download.py
 ```
 
+## Example
+
+```python
+import cbir
+import random
+
+# create the dataset
+# for the sake of speed, we will do it in a subset
+root = "path to a folder that contains a list of images"
+dataset = cbir.Dataset(root)
+subset = dataset.subset[0:10]
+
+# try plotting some of the images
+image_path = random.choice(subset)
+subset.show_image(image_path)
+
+# create the vocabulary tree
+
+orb = cbir.descriptors.Orb()
+voc = cbir.encoders.VocabularyTree(n_branches=3, depth=3, descriptor=orb)
+voc.learn(subset)
+
+# and now create the database
+db = cbir.Database(subset, encoder=voc)
+
+# let's generate the index
+db.index()
+
+# and test a retrieval
+query_path = "100000.jpeg"
+scores = db.retrieve(query_path)
+db.show_results(query_path, scores)
+```
+
+You can easily change the descriptor or the encoder to improve your results.
+
+An example using the probabilities of an `AlexNet` as embedding
+```python
+db = cbir.Database(subset, encoder=cbir.encoders.AlexNet())
+db.index()
+
+# retrieval
+query_path = "100000.jpeg"
+scores = db.retrieve(query_path)
+db.show_results(query_path, scores)
+```
+
+An example using the last layer of AlexNet as descriptors for the vocabulary tree
+```python
+voc = cbir.encoders.VocabularyTree(n_branches=3, depth=3, descriptor=cbir.descriptors.AlexNet())
+voc.learn(subset)
+
+# database
+db = cbir.Database(subset, encoder=voc)
+db.index()
+
+# retrieval
+query_path = "100000.jpeg"
+scores = db.retrieve(query_path)
+db.show_results(query_path, scores)
+```
+## [Dev] Add new descriptors or encoders
+Do add your own descriptors and encoders and tell us how they've done!
+
+To add a new descriptor:
+```python
+from . import DescriptorBase
+class NewDescriptor(DescriptorBase):
+   def describe(self, image_cv):
+      # do stuff
+      return the descriptor
+```
+
+To add a new encoder:
+```python
+class NewEncoder(object):
+   def embedding(self, image_cv):
+      # do stuff
+      return the embedding
+```
+
 ## Literature
 
 #### Datasets:
