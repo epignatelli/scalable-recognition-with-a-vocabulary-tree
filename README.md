@@ -20,7 +20,7 @@ jupyter-notebook
 
 #### 3. Open a terminal from jupyter and type
 ```
-python download.py
+python cbir/download.py
 ```
 
 #### 4. Go to this link and download the content into your local `data` folder
