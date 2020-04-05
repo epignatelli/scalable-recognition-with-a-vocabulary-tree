@@ -37,6 +37,9 @@ def get_image_id(array):
 
 
 def is_cuda_capable():
+    if not torch.cuda.is_available():
+        return False
+
     CUDA_VERSION = torch._C._cuda_getCompiledVersion()
     supported = True
     for d in range(torch.cuda.device_count()):
