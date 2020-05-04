@@ -5,12 +5,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
-import multiprocessing
 import warnings
+from .descriptor_base import DescriptorBase
 
 
-class EzSIFT():
+class EzSIFT(DescriptorBase):
     def __init__(self):
+        super(EzSIFT, self).__init__("data")
         if os.name == "nt":
             self.program = "./ezsift_win"
         elif os.name == "posix":
@@ -19,11 +20,6 @@ class EzSIFT():
 
     def __call__(self, img):
         return self.describe(img)
-
-    def describe_parallel(self, paths):
-        with multiprocessing.Pool(8) as p:
-            features = p.map(self.describe, paths)
-        return np.array(features)
 
     def describe(self, img):
         if not os.path.exists('data'):

@@ -1,15 +1,37 @@
 import numpy as np
+import os
 import cv2
+import h5py
 import random
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from matplotlib.gridspec import GridSpec
+from .. import utils
+from .descriptor_base import DescriptorBase
 
 
-class Descriptor(object):
+class Orb(DescriptorBase):
     def __init__(self, patch_size=65):
+        super(Orb, self).__init__("data")
         self.patch_size = (int(patch_size), int(patch_size))
         self.orb = cv2.ORB.create(1500, nlevels=32)
+
+    def describe(self, image):
+        """
+        Computes the ORB descriptor on the given path.
+
+        Args:
+            image (str): Image name
+
+        Returns:
+            list: List of descriptors for the image. If no keypoints are found,
+                  the list will contain a single descriptor full of zeros
+        """
+        # find the keypoints and descriptors with ORB (like SIFT)
+        kp, desc = self.orb.detectAndCompute(image, None)
+        desc = np.array(desc, dtype=np.float32)
+        if desc.size <= 1:
+            desc = np.zeros((1, 32))
+        return desc
 
     def extract_patches(self, img, keypoints):
         """Extracts the patches associated to the keypoints of a
@@ -45,24 +67,6 @@ class Descriptor(object):
             # Adding to the features
             patches.append(feat_patch)
         return patches
-
-    def describe(self, image):
-        """
-        Computes the ORB descriptor on the given path.
-
-        Args:
-            image (str): Image name
-
-        Returns:
-            list: List of descriptors for the image. If no keypoints are found,
-                  the list will contain a single descriptor full of zeros
-        """
-        # find the keypoints and descriptors with ORB (like SIFT)
-        kp, desc = self.orb.detectAndCompute(image, None)
-        desc = np.array(desc, dtype=np.float32)
-        if desc.size <= 1:
-            desc = np.zeros((1, 32))
-        return desc
 
     @staticmethod
     def show_random_descriptors(img, keypoints, patches, descriptors, N=5):
@@ -103,8 +107,6 @@ class Descriptor(object):
 
             # Getting descriptor and plotting it
             ax = fig.add_subplot(gs[n, -1])
-            clist = [(0, "#c58882"), (1, "#1d201f")]
-            rvb = mcolors.LinearSegmentedColormap.from_list("", clist)
             if n == 0:
                 ax.set_title("Descriptor")
             N = len(some_descriptors[n])
