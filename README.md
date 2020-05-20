@@ -1,6 +1,15 @@
-## Scalable Recognition with a Vocabulary Tree, D. Nister, H. Stewenius, 2006
-#### Abstract
+### Scalable Recognition with a Vocabulary Tree
+The code provided in this repository has been developed for teaching purposes at the Imperial College London. 
+It is part of the _Computer Vision Day_ of the Business School Executive Education Program for _Sberbank_.
 
+### Acknowledgements 
+The authors acknowledge the Executive Education of the Business School at the Imperial College for the support.
+We thank Professor Anil Bharath of the Department of Bioengineering for the guidance and the opportunity of being part of the _Computer Vision Day_.
+
+
+### Scalable recognition with a vocabulary tree
+
+**Abstract**
 > A recognition scheme that scales efficiently to a large number of objects is presented. The efficiency and quality is exhibited in a live demonstration that recognizes CD-covers from a database of 40000 images of popular music CD’s. The scheme builds upon popular techniques of indexing descriptors extracted from local regions, and is robust to background clutter and occlusion. The local region descriptors are hierarchically quantized in a vocabulary tree. The vocabulary tree allows a larger and more discriminatory vocabulary to be used efficiently, which we show experimentally leads to a dramatic improvement in retrieval quality. The most significant property of the scheme is that the tree directly defines the quantization. The quantization and the indexing are therefore fully integrated, essentially being one and the same. The recognition quality is evaluated through retrieval on a database with ground truth, showing the power of the vocabulary tree approach, going as high as 1 million images.
 
 
