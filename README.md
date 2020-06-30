@@ -5,6 +5,7 @@ It is part of the _Computer Vision Day_ of the Business School Executive Educati
 ### Acknowledgements 
 The authors acknowledge the Executive Education of the Business School at the Imperial College for the support.
 We thank Professor Anil Bharath of the Department of Bioengineering for the guidance and the opportunity of being part of the _Computer Vision Day_.
+Thanks to Kai Arulkumaran and to Stathi Fotiadis for the feedback before the session and the help within the session.
 
 
 ### Scalable recognition with a vocabulary tree
