@@ -2,21 +2,9 @@
 The code provided in this repository has been developed for teaching purposes at the Imperial College London. 
 It is part of the _Computer Vision Day_ of the Business School Executive Education Program for _Sberbank_.
 
-### Acknowledgements 
-The authors acknowledge the Executive Education of the Business School at the Imperial College for the support.
-We thank Professor Anil Bharath of the Department of Bioengineering for the guidance and the opportunity of being part of the _Computer Vision Day_.
-Thanks to Kai Arulkumaran and to Stathi Fotiadis for the feedback before the session and the assistance in teaching the session.
-
-
-### Scalable recognition with a vocabulary tree
-
-**Abstract**
-> A recognition scheme that scales efficiently to a large number of objects is presented. The efficiency and quality is exhibited in a live demonstration that recognizes CD-covers from a database of 40000 images of popular music CD’s. The scheme builds upon popular techniques of indexing descriptors extracted from local regions, and is robust to background clutter and occlusion. The local region descriptors are hierarchically quantized in a vocabulary tree. The vocabulary tree allows a larger and more discriminatory vocabulary to be used efficiently, which we show experimentally leads to a dramatic improvement in retrieval quality. The most significant property of the scheme is that the tree directly defines the quantization. The quantization and the indexing are therefore fully integrated, essentially being one and the same. The recognition quality is evaluated through retrieval on a database with ground truth, showing the power of the vocabulary tree approach, going as high as 1 million images.
-
 
 ## Getting started
 
-This repository provide a python implementation of the paper above.
 
 #### 1. Install the conda environment
    A. If you are on windows
@@ -41,123 +29,12 @@ jupyter-notebook
 python cbir/download.py
 ```
 
-## Example
 
-```python
-import cbir
-import random
+### Acknowledgements 
+The authors acknowledge the Executive Education of the Business School at the Imperial College for the support.
+We thank Professor Anil Bharath of the Department of Bioengineering for the guidance and the opportunity of being part of the _Computer Vision Day_.
+Thanks to Kai Arulkumaran and to Stathi Fotiadis for the feedback before the session and the assistance in teaching the session (2020).
 
-# create the dataset
-# for the sake of speed, we will do it in a subset
-root = "path to a folder that contains a list of images"
-dataset = cbir.Dataset(root)
-subset = dataset.subset[0:10]
-
-# try plotting some of the images
-image_path = random.choice(subset)
-subset.show_image(image_path)
-
-# create the vocabulary tree
-
-orb = cbir.descriptors.Orb()
-voc = cbir.encoders.VocabularyTree(n_branches=3, depth=3, descriptor=orb)
-voc.learn(subset)
-
-# and now create the database
-db = cbir.Database(subset, encoder=voc)
-
-# let's generate the index
-db.index()
-
-# and test a retrieval
-query_path = "100000.jpeg"
-scores = db.retrieve(query_path)
-db.show_results(query_path, scores)
-```
-
-You can easily change the descriptor or the encoder to improve your results.
-
-An example using the probabilities of an `AlexNet` as embedding
-```python
-db = cbir.Database(subset, encoder=cbir.encoders.AlexNet())
-db.index()
-
-# retrieval
-query_path = "100000.jpeg"
-scores = db.retrieve(query_path)
-db.show_results(query_path, scores)
-```
-
-An example using the last layer of AlexNet as descriptors for the vocabulary tree
-```python
-voc = cbir.encoders.VocabularyTree(n_branches=3, depth=3, descriptor=cbir.descriptors.AlexNet())
-voc.learn(subset)
-
-# database
-db = cbir.Database(subset, encoder=voc)
-db.index()
-
-# retrieval
-query_path = "100000.jpeg"
-scores = db.retrieve(query_path)
-db.show_results(query_path, scores)
-```
-
-## Performance test
-
-```python
-import cbir
-
-dataset = cbir.Dataset().subset[0:100]
-
-orb = cbir.descriptors.Orb()
-voc = cbir.encoders.VocabularyTree(n_branches=4, depth=4, descriptor=orb)
-
-features = voc.extract_features(dataset)
-
-%time voc.fit(features)
-```
-```
-CPU times: user 1min 43s, sys: 3.17 s, total: 1min 46sde 336 at level 3			
-Wall time: 56.6 s
-```
-```python
-db = cbir.Database(dataset, encoder=voc)
-%time db.index()
-```
-```
-CPU times: user 9min 2s, sys: 3.85 s, total: 9min 6s
-Wall time: 8min 46s
-```
-```python
-import random
-query = random.choice(dataset)
-%time scores = db.retrieve(query)
-```
-```
-CPU times: user 73.1 ms, sys: 7 µs, total: 73.1 ms
-Wall time: 72.5 ms
-```
-
-## [Dev] Add new descriptors or encoders
-Do add your own descriptors and encoders and tell us how they've done!
-
-To add a new descriptor:
-```python
-from . import DescriptorBase
-class NewDescriptor(DescriptorBase):
-   def describe(self, image_cv):
-      # do stuff
-      return the descriptor
-```
-
-To add a new encoder:
-```python
-class NewEncoder(object):
-   def embedding(self, image_cv):
-      # do stuff
-      return the embedding
-```
 
 ## Literature
 
