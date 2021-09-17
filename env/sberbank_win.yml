@@ -1,4 +1,4 @@
-name: sberbank_test
+name: cbir
 channels:
   - pytorch
   - defaults
@@ -23,5 +23,4 @@ dependencies:
   - tqdm
   - pip:
     - opencv-python
-prefix: ~/anaconda3/envs/sberbank
 

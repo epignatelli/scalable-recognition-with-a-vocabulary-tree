@@ -9,19 +9,19 @@ It is part of the _Computer Vision Day_ of the Business School Executive Educati
 #### 1. Install the conda environment
    A. If you are on windows
 ```
-conda env create -f env\sberbank_win.yaml
+conda env create -f env\sberbank_win.yml
 ```
 
    B. If you are on macOS or on linux platforms
 
 ```
-conda env create -f env\sberbank_unix.yaml
+conda env create -f env\sberbank_unix.yml
 ```
 
 #### 2. Start jupyter and open the notebook
 ```
-conda activate sberbank
-jupyter-notebook
+conda activate cbir
+jupyter lab
 ```
 
 #### 3. Open a terminal from jupyter and type
