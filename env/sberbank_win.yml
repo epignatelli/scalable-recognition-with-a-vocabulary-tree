@@ -1,26 +1,23 @@
 name: cbir
 channels:
-  - pytorch
   - defaults
   - alubbock
 dependencies:
-  - future
-  - h5py
-  - jupyter
-  - anaconda::jupyterlab
-  - matplotlib
-  - networkx
-  - numpy
-  - pandas
   - pip
   - alubbock::graphviz
   - alubbock::pygraphviz
-  - pytorch::pytorch
-  - pytorch::torchvision
-  - requests
-  - scipy
-  - scikit-learn
-  - tqdm
   - pip:
+    - future
+    - h5py
+    - jupyterlab
+    - ipywidgets
+    - matplotlib
+    - termcolor
+    - networkx
+    - pandas
+    - torch
+    - torchvision
+    - requests
+    - scikit-learn
+    - tqdm
     - opencv-python
-

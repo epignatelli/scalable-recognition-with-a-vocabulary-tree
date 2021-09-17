@@ -8,6 +8,7 @@ dependencies:
     - future
     - h5py
     - jupyterlab
+    - ipywidgets
     - matplotlib
     - termcolor
     - networkx
