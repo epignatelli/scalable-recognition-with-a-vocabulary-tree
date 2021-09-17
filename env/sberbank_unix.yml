@@ -1,24 +1,21 @@
 name: cbir
 channels:
-  - pytorch
   - defaults
 dependencies:
-  - future
-  - h5py
-  - jupyter
-  - anaconda::jupyterlab
-  - matplotlib
-  - networkx
-  - numpy
-  - pandas
   - pip
   - pygraphviz
-  - pytorch::pytorch
-  - pytorch::torchvision
-  - requests
-  - scipy
-  - scikit-learn
-  - tqdm
   - pip:
+    - future
+    - h5py
+    - jupyterlab
+    - matplotlib
+    - termcolor
+    - networkx
+    - pandas
+    - torch
+    - torchvision
+    - requests
+    - scikit-learn
+    - tqdm
     - opencv-python
 
