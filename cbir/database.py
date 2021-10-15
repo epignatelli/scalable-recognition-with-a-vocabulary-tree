@@ -93,7 +93,7 @@ class Database(object):
     def load(self, path="data"):
         # load indexed vectors from pickle
         try:
-            with open(os.path.join(path, "database.pickle"), "rb") as f:
+            with open(os.path.join(path, "index.pickle"), "rb") as f:
                 database = pickle.load(f)
                 self._database = database
         except:
