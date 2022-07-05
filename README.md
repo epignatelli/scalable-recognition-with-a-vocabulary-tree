@@ -2,6 +2,11 @@
 The code provided in this repository has been developed for teaching purposes at the Imperial College London. 
 It is part of the _Computer Vision Day_ of the Business School Executive Education Program for _Sberbank_.
 
+### Contributors
+- https://github.com/epignatelli
+- https://github.com/astanziola
+- https://github.com/aab01
+
 
 ## Getting started
 
