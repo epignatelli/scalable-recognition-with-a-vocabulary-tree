@@ -44,7 +44,7 @@ Thanks to Kai Arulkumaran and to Stathi Fotiadis for the feedback before the ses
 ## Literature
 
 #### Datasets:
-- [Hamming embedding and weak geometricconsistency for large scale image search (INRIA Holydays)](http://lear.inrialpes.fr/people/jegou/data.php#holidays) - [download](https://lear.inrialpes.fr/pubs/2008/JDS08/jegou_hewgc08.pdf)
+- [Hamming embedding and weak geometric consistency for large scale image search (INRIA Holydays)](http://lear.inrialpes.fr/people/jegou/data.php#holidays) - [download](https://lear.inrialpes.fr/pubs/2008/JDS08/jegou_hewgc08.pdf)
 - [Large-scale Landmark Retrieval/Recognition under a Noisy and Diverse Dataset](https://arxiv.org/abs/1906.04087)
 - [INSTRE: a New Benchmark for Instance-Level Object Retrieval and Recognition](https://dl.acm.org/doi/pdf/10.1145/2700292)
 
@@ -59,7 +59,7 @@ Thanks to Kai Arulkumaran and to Stathi Fotiadis for the feedback before the ses
 - [Slides on SIFT (Lect. 11 and 12)](http://vision.stanford.edu/teaching/cs231a_autumn1112/lecture/)
 - [Object Recognition from Local Scale-Invariant Features](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=790410)
 - [Distinctive Image Features from Scale-Invariant Keypoints](https://link.springer.com/content/pdf/10.1023/B:VISI.0000029664.99615.94.pdf)
-- [Speeded Up Ro- bust Feature (SURF)](https://www.vision.ee.ethz.ch/~surf/eccv06.pdf)
+- [Speeded Up Robust Feature (SURF)](https://www.vision.ee.ethz.ch/~surf/eccv06.pdf)
 - [Using very deep autoencoders for content-based image retrieval](http://www.cs.toronto.edu/~fritz/absps/esann-deep-final.pdf)
 - [Video Google: A Text Retrieval Approach to Object Matching in Videos](http://www.robots.ox.ac.uk/~vgg/publications/papers/sivic03.pdf)
 
